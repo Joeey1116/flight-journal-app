@@ -46,7 +46,7 @@ jobs:
     timeout-minutes: 15
     env:
       GH_TOKEN: ${{ github.token }}
-      ARTIFACT_PREFIX: Flight Journal
+      ARTIFACT_PREFIX: FlightJournal
     steps:
       - name: Check out the tag
         uses: actions/checkout@v5

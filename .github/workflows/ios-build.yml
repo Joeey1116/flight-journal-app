@@ -1,35 +1,34 @@
-name: Build iOS IPA (Flight Journal)
+name: Build iOS IPA (FlightJournal)
 
 # MANUAL TRIGGER ONLY: this workflow never runs on its own — it only spends
 # macOS minutes when someone clicks "Run workflow" in the Actions tab.
 #
 # HUMAN PREREQUISITES (do these first, or the upload step will fail):
 #   1. The App Store Connect app record for bundle ID
-#      com.beatrackfaminc.flightjournal does NOT exist yet — Joey must
-#      create it in App Store Connect first ("Flight Journal").
-#      Until it exists, the TestFlight upload step fails (the archive
-#      itself still builds). Do NOT guess an ASC ID.
+#      com.beatrackfaminc.flightjournal ("Flight Journal")
+#      does NOT exist yet — create it in App Store Connect first.
 #   2. In Apple Developer / App Store Connect, create an API key and add
-#      these four repo secrets (Settings, Secrets and variables, Actions):
+#      these repo secrets (Settings, Secrets and variables, Actions):
 #        ASC_API_KEY_ID, ASC_API_KEY_P8, ASC_API_ISSUER_ID, APPLE_TEAM_ID
-#   3. APP CLIP (bundle ID com.beatrackfaminc.flightjournal.FlightJournal — the App ID
-#      does NOT exist in the Developer portal yet; Joey creates it in the
-#      portal when the app is ready for the store, then the clip profile):
-#      a provisioning profile named exactly
-#      "Flight Journal App Clip" must exist in the portal — App Store
-#      distribution, for that App ID, including the Nov 6 Apple
-#      Distribution certificate. If the Profiles tab shows a clip profile
-#      under a DIFFERENT name, rename the profile in the portal to
-#      "Flight Journal App Clip" (or tell Gabi the exact name so the plugin's
-#      PROVISIONING_PROFILE_SPECIFIER can be updated). Until that profile
-#      exists, the archive step fails on the clip target. The plugin
+#      plus the distribution certificate secrets:
+#        IOS_DISTRIBUTION_P12, IOS_DISTRIBUTION_PASSWORD
+#   3. APP CLIP (bundle ID com.beatrackfaminc.flightjournal.FlightJournal — the App ID does NOT exist
+#      yet): create it in the Developer portal ("Flight Journal App Clip"; do
+#      not create another one once it exists), plus the App ID for the
+#      main app, and provisioning profiles named exactly "Flight Journal App"
+#      and "Flight Journal App Clip" (App Store distribution, including the Nov 6
+#      Apple Distribution certificate). Until those profiles exist, the
+#      archive step fails on signing. The plugin
 #      (plugins/with-app-clip.js) sets both profiles per-target in the
 #      project, so the archive step deliberately does NOT pass
-#      PROVISIONING_PROFILE_SPECIFIER on the command line — a command-line
-#      value would override BOTH targets with one profile.
+#      PROVISIONING_PROFILE_SPECIFIER on the command line.
+#   4. Supabase config loads from eas.json (placeholder values
+#      until the real project exists) — sign-up stays broken
+#      until the real Supabase project + URL/anon key land.
 #
-# Pattern copied from the proven workflow in the main BeaTrackFam app repo
-# (Joeey1116/BeaTrackFam-Mobile-App/.github/workflows/ios-build.yml).
+# Pattern copied from the proven workflow in the FlightJournal repo
+# (Joeey1116/flightjournal-ai-companion-app/.github/workflows/ios-build.yml),
+# itself modeled on the main BeaTrackFam app repo.
 
 on:
   workflow_dispatch:
@@ -46,7 +45,7 @@ permissions:
 
 jobs:
   build-ipa:
-    name: Archive Flight Journal (Release)
+    name: Archive FlightJournal (Release)
     runs-on: macos-26
     timeout-minutes: 120
 
@@ -189,11 +188,11 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           xcodebuild archive \
-            -workspace "ios/Flight Journal.xcworkspace" \
-            -scheme "Flight Journal" \
+            -workspace ios/FlightJournal.xcworkspace \
+            -scheme FlightJournal \
             -configuration Release \
             -destination 'generic/platform=iOS' \
-            -archivePath "$GITHUB_WORKSPACE/build/Flight Journal.xcarchive" \
+            -archivePath "$GITHUB_WORKSPACE/build/FlightJournal.xcarchive" \
             -allowProvisioningUpdates \
             -authenticationKeyPath "$HOME/private_keys/AuthKey_${ASC_API_KEY_ID}.p8" \
             -authenticationKeyID "$ASC_API_KEY_ID" \
@@ -239,7 +238,7 @@ jobs:
           </plist>
           PLIST
           xcodebuild -exportArchive \
-            -archivePath "$GITHUB_WORKSPACE/build/Flight Journal.xcarchive" \
+            -archivePath "$GITHUB_WORKSPACE/build/FlightJournal.xcarchive" \
             -exportPath "$GITHUB_WORKSPACE/build/ipa" \
             -exportOptionsPlist "$GITHUB_WORKSPACE/build/ExportOptions.plist" \
             -allowProvisioningUpdates \
@@ -250,7 +249,7 @@ jobs:
       - name: Upload the IPA as a run artifact
         uses: actions/upload-artifact@v6
         with:
-          name: Flight Journal-${{ env.APP_VERSION }}-${{ env.APP_BUILD }}-ipa
+          name: FlightJournal-${{ env.APP_VERSION }}-${{ env.APP_BUILD }}-ipa
           path: build/ipa/*.ipa
           if-no-files-found: error
           retention-days: 30

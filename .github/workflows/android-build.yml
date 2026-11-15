@@ -1,4 +1,4 @@
-name: Build Android AAB (Flight Journal)
+name: Build Android AAB (FlightJournal)
 
 # MANUAL TRIGGER ONLY: this workflow never runs on its own — it only spends
 # Actions minutes when someone clicks "Run workflow" in the Actions tab.
@@ -167,9 +167,9 @@ jobs:
         run: |
           VERSION="$(jq -r '.expo.version' app.json)"
           CODE="$(jq -r '.expo.android.versionCode' app.json)"
-          cp android/app/build/outputs/bundle/release/app-release.aab "Flight Journal-${VERSION}-${CODE}.aab"
-          echo "artifact_name=Flight Journal-${VERSION}-${CODE}-aab" >> "$GITHUB_OUTPUT"
-          echo "aab_file=Flight Journal-${VERSION}-${CODE}.aab" >> "$GITHUB_OUTPUT"
+          cp android/app/build/outputs/bundle/release/app-release.aab "FlightJournal-${VERSION}-${CODE}.aab"
+          echo "artifact_name=FlightJournal-${VERSION}-${CODE}-aab" >> "$GITHUB_OUTPUT"
+          echo "aab_file=FlightJournal-${VERSION}-${CODE}.aab" >> "$GITHUB_OUTPUT"
 
       - name: Upload the AAB as a run artifact
         uses: actions/upload-artifact@v6
