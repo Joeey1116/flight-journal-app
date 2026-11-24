@@ -34,7 +34,7 @@
  *      main target depend on the clip, so `xcodebuild archive` of the main
  *      scheme builds the clip and embeds it at AppClips/ inside the .app.
  *   4. Sets the Release PROVISIONING_PROFILE_SPECIFIER per target in the
- *      project (main -> "Flight Journal App", clip -> "Flight Journal App Clip"). This
+ *      project (main -> "FlightJournal App", clip -> "FlightJournal App Clip"). This
  *      MUST be per-target in the project: the workflow used to pass
  *      PROVISIONING_PROFILE_SPECIFIER on the xcodebuild command line, which
  *      would force the clip onto the main app's profile and fail signing.
@@ -44,7 +44,7 @@
  *
  * PORTAL PREREQUISITE (Joey): the clip App ID does NOT exist yet — create
  * it in the Developer portal first, then the provisioning profile
- * "Flight Journal App Clip" (App Store distribution, for the clip App ID
+ * "FlightJournal App Clip" (App Store distribution, for the clip App ID
  * above, including the Nov 6 Apple Distribution certificate) must exist
  * in the Developer portal before the archive will sign. The
  * workflow uses -allowProvisioningUpdates, so once the profile exists the
@@ -61,12 +61,9 @@
  * Remaining step after a fresh build ships these entitlements: create the
  * App Clip Experience in App Store Connect under the parent app.
  *
- * OPEN ITEM: the clip's "Get the full app" overlay needs the Flight Journal App
- * Store ID (plugins/app-clip/ContentView.swift, `appStoreID`) — it is a
- * clearly-marked TODO there. There is no ASC app record for
- * com.beatrackfaminc.flightjournal yet, so no ID exists to fill in; the
- * TestFlight upload fails until Joey creates the record. Fill the ID in
- * when the record exists — do NOT guess one.
+ * OPEN ITEM: the clip's "Get the full app" overlay now has the Flight Journal App
+ * Store ID (plugins/app-clip/ContentView.swift, `appStoreID` = 6835242780,
+ * filled Nov 24, 2026).
  *
  * SIZE: App Clips must be under 15 MB thinned. The first (React Native)
  * clip was 40 MB and Apple rejected it (ITMS-90865, Nov 10 2026). This
@@ -80,8 +77,8 @@ const path = require('path');
 
 const CLIP_TARGET_NAME = 'FlightJournalClip';
 const CLIP_BUNDLE_ID = 'com.beatrackfaminc.flightjournal.FlightJournal';
-const CLIP_PROFILE_NAME = 'Flight Journal App Clip';
-const MAIN_PROFILE_NAME = 'Flight Journal App';
+const CLIP_PROFILE_NAME = 'FlightJournal App Clip';
+const MAIN_PROFILE_NAME = 'FlightJournal App';
 const MAIN_TARGET_DIR = 'Flight Journal';
 
 /** Contents.json for the clip's own AppIcon set: a single 1024x1024 icon,

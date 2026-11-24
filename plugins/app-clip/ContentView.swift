@@ -2,10 +2,9 @@ import StoreKit
 import SwiftUI
 
 // MARK: - App Store ID
-// TODO: fill in the Flight Journal App Store Connect ID when Joey creates
-// the app record. Until then the "Get the full app" overlay stays hidden
-// (appStoreID is empty) — do NOT guess an ID.
-private let appStoreID = ""
+// App Store Connect ID 6835242780 (Joey, Nov 24, 2026) — the
+// "Get the full app" overlay is live.
+private let appStoreID = "6835242780"
 
 // MARK: - View
 
