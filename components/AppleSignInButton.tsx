@@ -1,15 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { Platform, StyleSheet, View } from "react-native";
 import * as AppleAuthentication from "expo-apple-authentication";
-import { supabase } from "../lib/supabase";
+import { SIGN_IN_CANCELLED_CODE, useAuth } from "../lib/auth";
 
 /**
  * AppleSignInButton — Sign in with Apple, rendered only when the native
  * module is available (iOS only, and never statically assumed: the
  * component checks availability first so web/Android never break).
  *
- * On success the Supabase session is established via signInWithIdToken.
- * Failures surface through onError so the screen can show them.
+ * The sheet + Firebase session are owned by AuthProvider (lib/auth):
+ * this button just calls signInWithApple() and surfaces real failures
+ * through onError so the screen can show them. A dismissed sheet is
+ * swallowed silently — cancelling is not an error.
+ *
+ * (Nov 24, 2026: the old version called Supabase signInWithIdToken
+ * directly and, with no Supabase configured, the Apple sheet completed
+ * and then nothing happened — the failure had nowhere to go on the
+ * sign-up screen, which passed no onError at all. Both screens now
+ * pass onError, so Apple failures are always visible.)
  */
 export function AppleSignInButton({
   onError,
@@ -17,6 +25,7 @@ export function AppleSignInButton({
   onError?: (message: string) => void;
 }) {
   const [available, setAvailable] = useState(false);
+  const { signInWithApple } = useAuth();
 
   useEffect(() => {
     let alive = true;
@@ -41,24 +50,10 @@ export function AppleSignInButton({
         style={styles.button}
         onPress={async () => {
           try {
-            const credential = await AppleAuthentication.signInAsync({
-              requestedScopes: [
-                AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-                AppleAuthentication.AppleAuthenticationScope.EMAIL,
-              ],
-            });
-            if (!credential.identityToken || !supabase) {
-              onError?.("Apple sign-in did not return a token. Try email instead.");
-              return;
-            }
-            const { error } = await supabase.auth.signInWithIdToken({
-              provider: "apple",
-              token: credential.identityToken,
-            });
-            if (error) onError?.(error.message);
+            await signInWithApple();
           } catch (e: unknown) {
             const err = e as { code?: string; message?: string };
-            if (err?.code === "ERR_REQUEST_CANCELED") return;
+            if (err?.code === SIGN_IN_CANCELLED_CODE) return;
             onError?.(err?.message ?? "Apple sign-in failed. Try email instead.");
           }
         }}

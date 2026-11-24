@@ -3,16 +3,17 @@ import { StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Logo } from '../components/Logo';
 import { useAuth } from '../lib/auth';
-import { takePasswordResetPending } from '../lib/passwordReset';
-import { takeEmailConfirmationFailed } from '../lib/emailConfirmed';
 
 /**
  * Auth gate: branded splash while AuthProvider restores the session,
  * then route on the resolved state — signed-in users to the tabs,
  * everyone else to onboarding. The gate no longer polls getSession():
- * the provider's restore already includes any cold-start deep-link
- * exchange, so when status resolves, the answer is final. Sign back in
+ * the provider's restore already includes the persisted Firebase
+ * session, so when status resolves, the answer is final. Sign back in
  * via the provider's transitions if a session appears later.
+ * (Firebase auth has no deep-link flows — confirmation and password
+ * reset complete on Firebase-hosted web pages — so there is no
+ * deep-link branch here anymore.)
  */
 export default function AuthGate() {
   const { status } = useAuth();
@@ -26,21 +27,8 @@ export default function AuthGate() {
 
   useEffect(() => {
     if (status === 'loading' || !minSplashDone) return;
-    // A password-reset deep link launched the app — the recovery session
-    // must land on the reset screen, not bounce into the tabs.
-    if (takePasswordResetPending()) {
-      router.replace('/reset-password');
-      return;
-    }
     if (status === 'signedIn') {
       router.replace('/(tabs)');
-      return;
-    }
-    // A confirmation link was opened but established no session (used or
-    // broken link). The account is usually confirmed server-side, so
-    // sign-in is the useful next step — not onboarding.
-    if (takeEmailConfirmationFailed()) {
-      router.replace('/sign-in');
       return;
     }
     router.replace('/onboarding');

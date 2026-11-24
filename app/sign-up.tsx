@@ -3,12 +3,8 @@ import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View 
 import { router } from 'expo-router';
 import { Screen } from '../components/Screen';
 import { Logo } from '../components/Logo';
-import { isSupabaseConfigured, supabase } from '../lib/supabase';
-import { ensureProfile } from '../lib/profile';
+import { useAuth } from '../lib/auth';
 import { AppleSignInButton } from '../components/AppleSignInButton';
-
-/** Where signup-confirmation emails send the user back (allowlisted in Supabase). */
-const CONFIRM_REDIRECT = 'flightjournal://confirmed';
 
 export default function SignUp() {
   const [email, setEmail] = useState('');
@@ -20,7 +16,7 @@ export default function SignUp() {
   const [cooldownSecs, setCooldownSecs] = useState(0);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const cooldownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const configured = isSupabaseConfigured();
+  const { signUpWithEmail, resendVerificationEmail } = useAuth();
 
   useEffect(() => {
     return () => {
@@ -48,16 +44,10 @@ export default function SignUp() {
     setResending(true);
     setError('');
     try {
-      const { error: resendError } = await supabase!.auth.resend({
-        type: 'signup',
-        email: target,
-        options: { emailRedirectTo: CONFIRM_REDIRECT },
-      });
-      if (resendError) {
-        setError(resendError.message);
-        return;
-      }
-      setInfo(`Confirmation email resent to ${target} — tap the link in the email and you'll come right back into the app. Check your inbox and spam folder.`);
+      // Firebase: the fresh account is already signed in (unverified),
+      // so this resends to that account.
+      await resendVerificationEmail();
+      setInfo(`Confirmation email resent to ${target} — tap the link in the email, then sign in. Check your inbox and spam folder.`);
       startCooldown();
     } catch {
       setError('Could not resend the email. Check your connection and try again.');
@@ -84,41 +74,16 @@ export default function SignUp() {
     }
     setLoading(true);
     try {
-      const { data, error: signUpError } = await supabase!.auth.signUp({
-        email: email.trim(),
-        password,
-        options: { emailRedirectTo: CONFIRM_REDIRECT },
-      });
-      if (signUpError) {
-        setError(signUpError.message);
-        return;
-      }
-      // Supabase may require email confirmation — then there is no session yet
-      // and we must NOT try to touch the database (RLS would reject it).
-      if (!data.session) {
-        setInfo(
-          `We sent a confirmation link to ${email.trim()} — tap it in your email and you'll come right back into the app. Check your inbox and spam folder.`
-        );
-        setNeedsConfirmation(true);
-        return;
-      }
-      const user = data.user;
-      if (!user) {
-        setInfo(
-          `We sent a confirmation link to ${email.trim()} — tap it in your email and you'll come right back into the app. Check your inbox and spam folder.`
-        );
-        setNeedsConfirmation(true);
-        return;
-      }
-      try {
-        await ensureProfile(user.id, email.trim());
-      } catch (profileError: any) {
-        setError(profileError?.message ?? 'Could not set up your profile. Try signing in.');
-        return;
-      }
-      router.replace('/(tabs)');
-    } catch {
-      setError('Could not create your account. Check your connection and try again.');
+      // Firebase creates the account and signs the user in immediately,
+      // but the email is unverified — the provider keeps the app signed
+      // out until the link is tapped, so show the confirmation flow.
+      await signUpWithEmail(email.trim(), password);
+      setInfo(
+        `We sent a confirmation link to ${email.trim()} — tap it in your email, then sign in. Check your inbox and spam folder.`
+      );
+      setNeedsConfirmation(true);
+    } catch (err: any) {
+      setError(err?.message ?? 'Could not create your account. Check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -142,7 +107,6 @@ export default function SignUp() {
         keyboardType="email-address"
         autoCapitalize="none"
         autoCorrect={false}
-        editable={configured}
       />
       <Text style={styles.label}>PASSWORD</Text>
       <TextInput
@@ -152,7 +116,6 @@ export default function SignUp() {
         placeholder="At least 6 characters"
         placeholderTextColor="#555555"
         secureTextEntry
-        editable={configured}
       />
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -176,15 +139,15 @@ export default function SignUp() {
       )}
 
       <TouchableOpacity
-        style={[styles.primary, (!configured || loading) && styles.primaryDisabled]}
+        style={[styles.primary, loading && styles.primaryDisabled]}
         onPress={handleSignUp}
-        disabled={!configured || loading}
+        disabled={loading}
         activeOpacity={0.8}
       >
         {loading ? <ActivityIndicator color="#000" /> : <Text style={styles.primaryText}>CREATE MY ACCOUNT</Text>}
       </TouchableOpacity>
 
-      <AppleSignInButton />
+      <AppleSignInButton onError={setError} />
 
       <TouchableOpacity onPress={() => router.replace('/sign-in')} style={styles.switch}>
         <Text style={styles.switchText}>Already have an account? Sign in</Text>

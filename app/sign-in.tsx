@@ -3,8 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View 
 import { router } from 'expo-router';
 import { Screen } from '../components/Screen';
 import { Logo } from '../components/Logo';
-import { isSupabaseConfigured, supabase } from '../lib/supabase';
-import { ensureProfile } from '../lib/profile';
+import { EMAIL_NOT_VERIFIED_CODE, useAuth } from '../lib/auth';
 import { AppleSignInButton } from '../components/AppleSignInButton';
 
 export default function SignIn() {
@@ -18,7 +17,7 @@ export default function SignIn() {
   const [cooldownSecs, setCooldownSecs] = useState(0);
   const [showResend, setShowResend] = useState(false);
   const cooldownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const configured = isSupabaseConfigured();
+  const { signInWithEmail, sendPasswordReset, resendVerificationEmail } = useAuth();
 
   useEffect(() => {
     return () => {
@@ -46,16 +45,10 @@ export default function SignIn() {
     setResending(true);
     setError('');
     try {
-      const { error: resendError } = await supabase!.auth.resend({
-        type: 'signup',
-        email: target,
-        options: { emailRedirectTo: 'flightjournal://confirmed' },
-      });
-      if (resendError) {
-        setError(resendError.message);
-        return;
-      }
-      setInfo(`Confirmation email resent to ${target} — tap the link in the email and you'll come right back into the app. Check your inbox and spam folder.`);
+      // Firebase: the user is already signed in (an unverified sign-in
+      // keeps the Firebase session), so this resends to that account.
+      await resendVerificationEmail();
+      setInfo(`Confirmation email resent to ${target} — tap the link in the email, then sign in here. Check your inbox and spam folder.`);
       startCooldown();
     } catch {
       setError('Could not resend the email. Check your connection and try again.');
@@ -75,14 +68,10 @@ export default function SignIn() {
     }
     setForgotSending(true);
     try {
-      const { error: resetError } = await supabase!.auth.resetPasswordForEmail(target, {
-        redirectTo: 'flightjournal://reset-password',
-      });
-      if (resetError) {
-        setError(resetError.message);
-        return;
-      }
-      setInfo(`Password reset email sent to ${target} — check your inbox and spam folder.`);
+      // Firebase sends a link to a Firebase-hosted page where the user
+      // chooses the new password — no deep link back into the app.
+      await sendPasswordReset(target);
+      setInfo(`Password reset email sent to ${target} — tap the link in the email to choose a new password, then sign in here. Check your inbox and spam folder.`);
     } catch {
       setError('Could not send the reset email. Check your connection and try again.');
     } finally {
@@ -99,30 +88,20 @@ export default function SignIn() {
     }
     setLoading(true);
     try {
-      const { data, error: signInError } = await supabase!.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-      if (signInError) {
-        if (signInError.message.toLowerCase().includes('email not confirmed')) {
-          setInfo(
-            `Your email isn\u2019t confirmed yet. We sent the link to ${email.trim()} — tap it in your email and you'll come right back into the app. Check your inbox and spam folder, or resend it below.`
-          );
-          setShowResend(true);
-        } else {
-          setError(signInError.message);
-        }
+      await signInWithEmail(email.trim(), password);
+      router.replace('/(tabs)');
+    } catch (err: any) {
+      // Unverified email: the account exists and stays signed in to
+      // Firebase so the confirmation email can be resent — show that
+      // flow instead of a generic error.
+      if (err?.code === EMAIL_NOT_VERIFIED_CODE) {
+        setInfo(
+          `Your email isn\u2019t confirmed yet. We sent the link to ${email.trim()} — tap it in your email, then sign in here. Check your inbox and spam folder, or resend it below.`
+        );
+        setShowResend(true);
       } else {
-        // Make sure the profile exists (covers users who confirmed via email).
-        try {
-          if (data.user) await ensureProfile(data.user.id, email.trim());
-        } catch {
-          // Non-fatal: the home tab will show a signed-in state regardless.
-        }
-        router.replace('/(tabs)');
+        setError(err?.message ?? 'Could not sign you in. Check your connection and try again.');
       }
-    } catch {
-      setError('Could not sign you in. Check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -146,7 +125,6 @@ export default function SignIn() {
         keyboardType="email-address"
         autoCapitalize="none"
         autoCorrect={false}
-        editable={configured}
       />
       <Text style={styles.label}>PASSWORD</Text>
       <TextInput
@@ -156,12 +134,11 @@ export default function SignIn() {
         placeholder="Your password"
         placeholderTextColor="#555555"
         secureTextEntry
-        editable={configured}
       />
 
       <TouchableOpacity
         onPress={handleForgotPassword}
-        disabled={!configured || forgotSending}
+        disabled={forgotSending}
         style={styles.forgot}
         activeOpacity={0.8}
       >
@@ -193,15 +170,15 @@ export default function SignIn() {
       )}
 
       <TouchableOpacity
-        style={[styles.primary, (!configured || loading) && styles.primaryDisabled]}
+        style={[styles.primary, loading && styles.primaryDisabled]}
         onPress={handleSignIn}
-        disabled={!configured || loading}
+        disabled={loading}
         activeOpacity={0.8}
       >
         {loading ? <ActivityIndicator color="#000" /> : <Text style={styles.primaryText}>SIGN IN</Text>}
       </TouchableOpacity>
 
-      <AppleSignInButton />
+      <AppleSignInButton onError={setError} />
 
       <TouchableOpacity onPress={() => router.replace('/sign-up')} style={styles.switch}>
         <Text style={styles.switchText}>New here? Meet Flight Journal</Text>
