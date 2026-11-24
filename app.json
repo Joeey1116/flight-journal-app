@@ -52,7 +52,8 @@
             "enableMinifyInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true,
             "minSdkVersion": 24,
-            "targetSdkVersion": 36
+            "targetSdkVersion": 36,
+            "kotlinVersion": "2.3.20"
           },
           "ios": {
             "deploymentTarget": "16.4",
@@ -60,6 +61,8 @@
           }
         }
       ],
+      "./plugins/with-kotlin-gradle-plugin-version",
+      "./plugins/with-firebase-auth-version",
       [
         "expo-tracking-transparency",
         {
