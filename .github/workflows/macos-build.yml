@@ -107,8 +107,14 @@ jobs:
           node-version: '24'
           cache: npm
 
+      # --legacy-peer-deps is required for the Mac pilot ONLY:
+      # react-native-macos@0.83.0 declares a peer on
+      # react-native@0.83.10 while the app runs react-native@0.86
+      # (and reanimated 4.8 peers at 0.87–0.89), so a strict npm ci
+      # dies with ERESOLVE before anything installs. iOS/Android keep
+      # the strict install — do not copy this flag there.
       - name: Install JS dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
         env:
           EXPO_NO_TELEMETRY: '1'
 
