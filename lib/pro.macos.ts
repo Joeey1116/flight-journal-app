@@ -22,29 +22,23 @@ import { useEffect, useSyncExternalStore } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FREE_ENTRY_LIMIT } from "./types";
 
-const IOS_SKUS = ["FLIGHTJOURNALPRO_MONTHLY", "FLIGHTJOURNALPRO_YEARLY", "FLIGHTJOURNALPRO_LIFETIME"];
-const ANDROID_SKUS = ["flightjournalpro_monthly", "flightjournalpro_yearly", "flightjournalpro_lifetime"];
+const IOS_SKUS = ["flightjournal.pro.monthly", "flightjournal.pro.yearly", "flightjournal.pro"];
+const ANDROID_SKUS = ["flightjournal.pro.monthly", "flightjournal.pro.yearly", "flightjournal.pro"];
 
 export const SKUS = IOS_SKUS;
 
-export const LIFETIME_SKU = "FLIGHTJOURNALPRO_LIFETIME";
+export const LIFETIME_SKU = "flightjournal.pro";
 
 export const SKU_NAMES: Record<string, string> = {
-  FLIGHTJOURNALPRO_MONTHLY: "Pro Monthly",
-  FLIGHTJOURNALPRO_YEARLY: "Pro Yearly",
-  FLIGHTJOURNALPRO_LIFETIME: "Pro Lifetime",
-  flightjournalpro_monthly: "Pro Monthly",
-  flightjournalpro_yearly: "Pro Yearly",
-  flightjournalpro_lifetime: "Pro Lifetime",
+  "flightjournal.pro.monthly": "Pro Monthly",
+  "flightjournal.pro.yearly": "Pro Yearly",
+  "flightjournal.pro": "Pro Lifetime",
 };
 
 export const SKU_PRICES: Record<string, string> = {
-  FLIGHTJOURNALPRO_MONTHLY: "$4.99/mo",
-  FLIGHTJOURNALPRO_YEARLY: "$49.99/yr",
-  FLIGHTJOURNALPRO_LIFETIME: "$99.99 once",
-  flightjournalpro_monthly: "$4.99/mo",
-  flightjournalpro_yearly: "$49.99/yr",
-  flightjournalpro_lifetime: "$99.99 once",
+  "flightjournal.pro.monthly": "$4.99/mo",
+  "flightjournal.pro.yearly": "$49.99/yr",
+  "flightjournal.pro": "$99.99 once",
 };
 
 /** Shared copy for the demo-mode (no store products yet) state. */

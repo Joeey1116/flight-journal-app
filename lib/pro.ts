@@ -3,8 +3,9 @@
  * (react-native-iap v17, event-based: requestPurchase resolves nothing —
  * the outcome arrives through purchaseUpdatedListener).
  *
- * TODO (Joey): create these exact product IDs in App Store Connect /
- * Play Console before wiring live purchases. Until then there is NO
+ * The product IDs below match App Store Connect (Joey created the
+ * Lifetime product there as "flightjournal.pro"); the Play Console
+ * products will use the same IDs. Until the products are live there is NO
  * store connection ("demo mode"): products resolve to their local
  * fallback info, and — per Joey's explicit direction — the paywall
  * must NOT grant Pro for free. Buy/restore report "unavailable" and
@@ -39,32 +40,28 @@ import {
 } from "react-native-iap";
 import { FREE_ENTRY_LIMIT } from "./types";
 
-// TODO: Joey creates these exact IDs in App Store Connect.
-const IOS_SKUS = ["FLIGHTJOURNALPRO_MONTHLY", "FLIGHTJOURNALPRO_YEARLY", "FLIGHTJOURNALPRO_LIFETIME"];
-// TODO: Joey creates these in Play Console after uploading a build with billing.
-const ANDROID_SKUS = ["flightjournalpro_monthly", "flightjournalpro_yearly", "flightjournalpro_lifetime"];
+// Product IDs match App Store Connect: Joey created the Lifetime
+// non-consumable there as "flightjournal.pro" (reference name
+// "Flight Journal Pro"); Monthly/Yearly follow the same scheme.
+// TODO: create the same IDs in Play Console after uploading a build
+// with billing.
+const IOS_SKUS = ["flightjournal.pro.monthly", "flightjournal.pro.yearly", "flightjournal.pro"];
+const ANDROID_SKUS = ["flightjournal.pro.monthly", "flightjournal.pro.yearly", "flightjournal.pro"];
 
 export const SKUS = Platform.OS === "ios" ? IOS_SKUS : ANDROID_SKUS;
 
-export const LIFETIME_SKU =
-  Platform.OS === "ios" ? "FLIGHTJOURNALPRO_LIFETIME" : "flightjournalpro_lifetime";
+export const LIFETIME_SKU = "flightjournal.pro";
 
 export const SKU_NAMES: Record<string, string> = {
-  FLIGHTJOURNALPRO_MONTHLY: "Pro Monthly",
-  FLIGHTJOURNALPRO_YEARLY: "Pro Yearly",
-  FLIGHTJOURNALPRO_LIFETIME: "Pro Lifetime",
-  flightjournalpro_monthly: "Pro Monthly",
-  flightjournalpro_yearly: "Pro Yearly",
-  flightjournalpro_lifetime: "Pro Lifetime",
+  "flightjournal.pro.monthly": "Pro Monthly",
+  "flightjournal.pro.yearly": "Pro Yearly",
+  "flightjournal.pro": "Pro Lifetime",
 };
 
 export const SKU_PRICES: Record<string, string> = {
-  FLIGHTJOURNALPRO_MONTHLY: "$4.99/mo",
-  FLIGHTJOURNALPRO_YEARLY: "$49.99/yr",
-  FLIGHTJOURNALPRO_LIFETIME: "$99.99 once",
-  flightjournalpro_monthly: "$4.99/mo",
-  flightjournalpro_yearly: "$49.99/yr",
-  flightjournalpro_lifetime: "$99.99 once",
+  "flightjournal.pro.monthly": "$4.99/mo",
+  "flightjournal.pro.yearly": "$49.99/yr",
+  "flightjournal.pro": "$99.99 once",
 };
 
 /** Shared copy for the demo-mode (no store products yet) state. */
