@@ -7,11 +7,23 @@ import { COLORS } from "../lib/theme";
  * Screen — dark full-screen wrapper for auth/onboarding/settings pages.
  * Scrollable, safe-area aware, cockpit-dark background.
  */
-export function Screen({ children }: { children: ReactNode }) {
+export function Screen({
+  children,
+  transparentBackground = false,
+}: {
+  children: ReactNode;
+  transparentBackground?: boolean;
+}) {
   return (
-    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+    <SafeAreaView
+      style={[styles.safe, transparentBackground && styles.transparent]}
+      edges={["top", "bottom"]}
+    >
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          transparentBackground && styles.transparent,
+        ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -31,6 +43,7 @@ export function PlainScreen({ children }: { children: ReactNode }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.bg },
+  transparent: { backgroundColor: "transparent" },
   content: {
     flexGrow: 1,
     paddingHorizontal: 24,

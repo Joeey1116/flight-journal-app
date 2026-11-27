@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
   Alert,
+  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -21,13 +22,11 @@ import { LIFETIME_SKU, SKUS, usePro } from "../lib/pro";
  * finishing (buying Pro OR tapping "Continue free") sets the
  * onboarding-complete flag and the launch gate never shows this again.
  *
- * BACKGROUND: the paywall and value screens are designed to sit over
- * a full-screen aviation photo (cockpit at golden hour) with a dark
- * gradient overlay. Until that asset is dropped in at
- * assets/onboarding-bg.jpg, OnboardingBackground renders the same
- * treatment as layered gradients (deep navy → black with a warm
- * amber glow at the top). To use the photo, render it as an
- * ImageBackground under the gradient overlay in OnboardingBackground.
+ * BACKGROUND: the paywall and value screens sit over a full-screen
+ * aviation photo (cockpit at golden hour, assets/onboarding-bg.jpg)
+ * with a dark gradient overlay so text stays readable. The layered
+ * gradients underneath remain as the fallback treatment if the
+ * image ever fails to load.
  */
 function OnboardingBackground({ children }: { children: ReactNode }) {
   return (
@@ -37,11 +36,19 @@ function OnboardingBackground({ children }: { children: ReactNode }) {
         locations={[0, 0.35, 0.7, 1]}
         style={StyleSheet.absoluteFill}
       />
+      <Image
+        source={require("../assets/onboarding-bg.jpg")}
+        style={StyleSheet.absoluteFill}
+        resizeMode="cover"
+      />
       <LinearGradient
-        colors={["rgba(245,197,24,0.28)", "rgba(245,158,11,0.08)", "transparent"]}
-        locations={[0, 0.45, 0.75]}
-        start={{ x: 0.15, y: 0 }}
-        end={{ x: 0.85, y: 0.55 }}
+        colors={[
+          "rgba(5,7,13,0.18)",
+          "rgba(5,7,13,0.45)",
+          "rgba(5,7,13,0.88)",
+          "#05070D",
+        ]}
+        locations={[0, 0.4, 0.75, 1]}
         style={StyleSheet.absoluteFill}
       />
       {children}
@@ -164,7 +171,7 @@ export default function Onboarding() {
 
   return (
     <OnboardingBackground>
-      <Screen>
+      <Screen transparentBackground>
         {page === 0 && (
           <View style={styles.page}>
             <View style={styles.hero}>
