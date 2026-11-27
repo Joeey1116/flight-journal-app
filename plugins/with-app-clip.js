@@ -34,7 +34,7 @@
  *      main target depend on the clip, so `xcodebuild archive` of the main
  *      scheme builds the clip and embeds it at AppClips/ inside the .app.
  *   4. Sets the Release PROVISIONING_PROFILE_SPECIFIER per target in the
- *      project (main -> "FlightJournal App", clip -> "FlightJournal App Clip"). This
+ *      project (main -> "FlightJournal - Pilot Logbook", clip -> "FlightJournal - Pilot Logbook App Clip"). This
  *      MUST be per-target in the project: the workflow used to pass
  *      PROVISIONING_PROFILE_SPECIFIER on the xcodebuild command line, which
  *      would force the clip onto the main app's profile and fail signing.
@@ -44,7 +44,7 @@
  *
  * PORTAL PREREQUISITE (Joey): the clip App ID does NOT exist yet — create
  * it in the Developer portal first, then the provisioning profile
- * "FlightJournal App Clip" (App Store distribution, for the clip App ID
+ * "FlightJournal - Pilot Logbook App Clip" (App Store distribution, for the clip App ID
  * above, including the Nov 6 Apple Distribution certificate) must exist
  * in the Developer portal before the archive will sign. The
  * workflow uses -allowProvisioningUpdates, so once the profile exists the
@@ -77,8 +77,8 @@ const path = require('path');
 
 const CLIP_TARGET_NAME = 'FlightJournalClip';
 const CLIP_BUNDLE_ID = 'com.beatrackfaminc.flightjournal.FlightJournal';
-const CLIP_PROFILE_NAME = 'FlightJournal App Clip';
-const MAIN_PROFILE_NAME = 'FlightJournal App';
+const CLIP_PROFILE_NAME = 'FlightJournal - Pilot Logbook App Clip';
+const MAIN_PROFILE_NAME = 'FlightJournal - Pilot Logbook';
 const MAIN_TARGET_DIR = 'Flight Journal';
 
 /** Contents.json for the clip's own AppIcon set: a single 1024x1024 icon,

@@ -13,10 +13,10 @@ name: Build iOS IPA (FlightJournal)
 #      plus the distribution certificate secrets:
 #        IOS_DISTRIBUTION_P12, IOS_DISTRIBUTION_PASSWORD
 #   3. APP CLIP (bundle ID com.beatrackfaminc.flightjournal.FlightJournal — the App ID does NOT exist
-#      yet): create it in the Developer portal ("FlightJournal App Clip"; do
+#      yet): create it in the Developer portal ("FlightJournal - Pilot Logbook App Clip"; do
 #      not create another one once it exists), plus the App ID for the
-#      main app, and provisioning profiles named exactly "FlightJournal App"
-#      and "FlightJournal App Clip" (App Store distribution, including the Nov 6
+#      main app, and provisioning profiles named exactly "FlightJournal - Pilot Logbook"
+#      and "FlightJournal - Pilot Logbook App Clip" (App Store distribution, including the Nov 6
 #      Apple Distribution certificate). Until those profiles exist, the
 #      archive step fails on signing. The plugin
 #      (plugins/with-app-clip.js) sets both profiles per-target in the
@@ -167,8 +167,8 @@ jobs:
         # com.beatrackfaminc.flightjournal.FlightJournal) is built and embedded by this
         # same archive: plugins/with-app-clip.js adds it as a dependency of
         # the main target plus an "Embed App Clips" phase, and sets the
-        # per-target provisioning profiles in the project ("FlightJournal App"
-        # for the main app, "FlightJournal App Clip" for the clip). Do NOT add a
+        # per-target provisioning profiles in the project ("FlightJournal - Pilot Logbook"
+        # for the main app, "FlightJournal - Pilot Logbook App Clip" for the clip). Do NOT add a
         # PROVISIONING_PROFILE_SPECIFIER here — a command-line value would
         # override both targets with one profile and break the clip.
         timeout-minutes: 50
@@ -220,9 +220,9 @@ jobs:
             <key>provisioningProfiles</key>
             <dict>
               <key>com.beatrackfaminc.flightjournal</key>
-              <string>FlightJournal App</string>
+              <string>FlightJournal - Pilot Logbook</string>
               <key>com.beatrackfaminc.flightjournal.FlightJournal</key>
-              <string>FlightJournal App Clip</string>
+              <string>FlightJournal - Pilot Logbook App Clip</string>
             </dict>
           </dict>
           </plist>
