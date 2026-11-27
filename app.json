@@ -9,8 +9,7 @@
         "com.google.android.gms.permission.AD_ID"
       ],
       "package": "com.beatrackfaminc.flightjournal",
-      "versionCode": 1003,
-      "googleServicesFile": "./google-services.json"
+      "versionCode": 1003
     },
     "extra": {
       "eas": {
@@ -21,7 +20,6 @@
     "ios": {
       "buildNumber": "1003",
       "bundleIdentifier": "com.beatrackfaminc.flightjournal",
-      "googleServicesFile": "./GoogleService-Info.plist",
       "deploymentTarget": "16.4",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -36,7 +34,6 @@
       "expo-router",
       "expo-font",
       "expo-web-browser",
-      "expo-apple-authentication",
       [
         "expo-notifications",
         {
@@ -62,7 +59,6 @@
         }
       ],
       "./plugins/with-kotlin-gradle-plugin-version",
-      "./plugins/with-firebase-auth-version",
       [
         "expo-tracking-transparency",
         {
@@ -71,8 +67,6 @@
       ],
       "./plugins/with-privacy-manifest",
       "./plugins/with-app-clip",
-      "@react-native-firebase/app",
-      "@react-native-firebase/auth",
       "expo-asset"
     ],
     "scheme": "flightjournal",

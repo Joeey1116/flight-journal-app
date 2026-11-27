@@ -125,7 +125,7 @@ export default function NewEntryScreen() {
     if (!editing && !canAddEntry(isPro, entries.length)) {
       Alert.alert(
         "Free limit reached",
-        "Free logging covers 25 entries. Go Pro for unlimited entries, export, and cloud sync.",
+        "Free logging covers 25 entries. Go Pro for unlimited entries and PDF/CSV export.",
         [
           { text: "Not now", style: "cancel" },
           { text: "See Pro", onPress: () => router.push("/pro") },

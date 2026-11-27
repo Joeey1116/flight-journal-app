@@ -5,7 +5,7 @@ import { COLORS } from "../lib/theme";
 
 /**
  * Logo — rounded dark panel with a cyan airplane glyph.
- * Used on the splash, onboarding, and auth screens.
+ * Used on the splash and onboarding screens.
  */
 export function Logo({ size = 96 }: { size?: number }) {
   return (

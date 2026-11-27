@@ -75,17 +75,6 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
   }
 }
 
-/** Persist the push token on the user's profile (needs the push_token column). */
-export async function savePushToken(userId: string, token: string): Promise<void> {
-  try {
-    const { isSupabaseConfigured, supabase } = await import('./supabase');
-    if (!isSupabaseConfigured() || !supabase) return;
-    await supabase.from('profiles').update({ push_token: token }).eq('id', userId);
-  } catch {
-    // Non-fatal — the app works without a stored token.
-  }
-}
-
 /**
  * Listen for notification taps (foreground + background). Returns an
  * unsubscribe function. The callback receives the deep-link target.

@@ -1,33 +1,24 @@
 import { useEffect, useState } from "react";
-import { Alert, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { router } from "expo-router";
 import { Screen } from "../components/Screen";
 import { GlassCard } from "../components/GlassCard";
-import { useAuth } from "../lib/auth";
 import { loadSettings, saveSettings, type Settings } from "../lib/settings";
-import { getProfile, updateProfile } from "../lib/profile";
 import { usePro } from "../lib/pro";
 
 /**
- * Settings — pilot profile, preferences, account.
- * Display name + home airport live in Settings (on-device) and on the
- * profile row when signed in with a real backend.
+ * Settings — pilot profile and preferences, all on-device.
+ * There is no account (removed Nov 27, 2026): display name, home
+ * airport, and default aircraft live in local Settings and pre-fill
+ * new entries and exports.
  */
 export default function SettingsScreen() {
-  const { userId, email, signOut } = useAuth();
   const { isPro } = usePro();
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [displayName, setDisplayName] = useState("");
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     void loadSettings().then(setSettings);
-    if (userId) {
-      void getProfile(userId).then((p) => {
-        if (p?.displayName) setDisplayName(p.displayName);
-      });
-    }
-  }, [userId]);
+  }, []);
 
   if (!settings) {
     return (
@@ -40,40 +31,12 @@ export default function SettingsScreen() {
   const update = async (next: Settings) => {
     setSettings(next);
     await saveSettings(next);
-    if (userId && next.displayName !== displayName) {
-      try {
-        await updateProfile(userId, { display_name: next.displayName || null });
-      } catch {
-        // Non-fatal — local settings still saved.
-      }
-    }
-  };
-
-  const deleteAccount = () => {
-    Alert.alert(
-      "Delete account?",
-      "This removes your profile and all logbook data from our servers. Export your logbook first if you want to keep a copy. This cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
-            Alert.alert(
-              "Export first",
-              "Use More → Export to save a PDF or CSV copy before deleting.",
-              [{ text: "OK" }],
-            );
-          },
-        },
-      ],
-    );
   };
 
   return (
     <Screen>
       <Text style={styles.headline}>Settings</Text>
-      <Text style={styles.subline}>Your profile, your preferences.</Text>
+      <Text style={styles.subline}>Your profile, your preferences — all on this device.</Text>
 
       <GlassCard style={styles.card}>
         <Text style={styles.label}>DISPLAY NAME</Text>
@@ -83,7 +46,6 @@ export default function SettingsScreen() {
           placeholder="Your name"
           value={settings.displayName}
           onChangeText={(v) => void update({ ...settings, displayName: v })}
-          onBlur={() => setDisplayName(settings.displayName)}
         />
         <Text style={styles.hint}>Shown on your exports and profile.</Text>
 
@@ -151,7 +113,6 @@ export default function SettingsScreen() {
             <Text style={styles.primaryText}>Go Pro</Text>
           </TouchableOpacity>
         )}
-        <Text style={styles.hint}>{email ?? ""}</Text>
       </GlassCard>
 
       <TouchableOpacity
@@ -159,25 +120,6 @@ export default function SettingsScreen() {
         onPress={() => router.push("/privacy-policy")}
       >
         <Text style={styles.secondaryText}>Privacy policy</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.secondary, styles.danger]}
-        onPress={deleteAccount}
-      >
-        <Text style={[styles.secondaryText, styles.dangerText]}>Delete account</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.secondary}
-        onPress={async () => {
-          setSaving(true);
-          await signOut();
-          setSaving(false);
-        }}
-        disabled={saving}
-      >
-        <Text style={styles.secondaryText}>{saving ? "Signing out…" : "Sign out"}</Text>
       </TouchableOpacity>
     </Screen>
   );
@@ -234,6 +176,4 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   secondaryText: { color: "#ffffff", fontSize: 15, fontWeight: "700" },
-  danger: { borderColor: "#7F1D1D" },
-  dangerText: { color: "#F87171" },
 });

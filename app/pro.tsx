@@ -1,7 +1,10 @@
 /**
  * Pro — free vs Pro, and the purchase screen.
  * Free: 25 entries, on-device only. Pro: unlimited entries, PDF/CSV
- * export, cloud sync, advanced stats.
+ * export, ATP minimums tracker, sim-flight auto-import.
+ *
+ * Monthly and Yearly carry a 7-day free trial (presented here and on
+ * the onboarding paywall); Lifetime is a one-time purchase, no trial.
  *
  * Product IDs are placeholders (TODO in lib/pro.ts) — Joey creates the
  * real products in App Store Connect / Play Console before launch.
@@ -13,7 +16,7 @@ import { Alert, StyleSheet, Text, View } from "react-native";
 import { Screen } from "../components/Screen";
 import { Card, PrimaryButton, SecondaryButton, SectionTitle } from "../components/ui";
 import { COLORS } from "../lib/theme";
-import { SKU_NAMES, SKU_PRICES, SKUS, usePro } from "../lib/pro";
+import { SKU_NAMES, SKU_PRICES, SKUS, isSubscriptionSku, usePro } from "../lib/pro";
 import { useLogbook } from "../lib/store";
 import { FREE_ENTRY_LIMIT } from "../lib/types";
 
@@ -39,7 +42,7 @@ export default function ProScreen() {
     Alert.alert(
       ok ? "Welcome to Pro" : "Purchase didn't go through",
       ok
-        ? "Pro is active — unlimited entries, export, and cloud sync are unlocked."
+        ? "Pro is active — unlimited entries and PDF/CSV export are unlocked."
         : "Nothing was charged. Try again, or restore a previous purchase.",
     );
   };
@@ -50,7 +53,7 @@ export default function ProScreen() {
       owned ? "Purchase restored" : "Nothing to restore",
       owned
         ? "Pro is active again."
-        : "No previous Pro purchase was found for this account.",
+        : "No previous Pro purchase was found.",
     );
   };
 
@@ -72,7 +75,6 @@ export default function ProScreen() {
         <SectionTitle>Pro — everything in Free, plus:</SectionTitle>
         <CheckRow text="Unlimited entries" />
         <CheckRow text="PDF + CSV export" />
-        <CheckRow text="Cloud sync across devices" />
         <CheckRow text="ATP minimums tracker" />
         <CheckRow text="Sim-flight auto-import" />
       </Card>
@@ -86,17 +88,28 @@ export default function ProScreen() {
           <SectionTitle>Plans</SectionTitle>
           {SKUS.map((sku) => {
             const p = products.find((x) => x.id === sku);
+            const trial = isSubscriptionSku(sku);
+            const price = p?.displayPrice ?? SKU_PRICES[sku] ?? "";
             return (
               <Card key={sku}>
                 <View style={styles.planRow}>
-                  <View>
+                  <View style={styles.planInfo}>
                     <Text style={styles.planName}>{SKU_NAMES[sku] ?? sku}</Text>
-                    <Text style={styles.planPrice}>
-                      {p?.displayPrice ?? SKU_PRICES[sku] ?? ""}
+                    <Text style={styles.planPrice}>{price}</Text>
+                    <Text style={styles.trialText}>
+                      {trial
+                        ? `Free for 7 days, then ${price} — cancel anytime`
+                        : "One-time purchase — yours forever"}
                     </Text>
                   </View>
                   <PrimaryButton
-                    title={busySku === sku ? "…" : "Get Pro"}
+                    title={
+                      busySku === sku
+                        ? "…"
+                        : trial
+                          ? "Start 7-day free trial"
+                          : "Get Pro"
+                    }
                     onPress={() => onBuy(sku)}
                     disabled={busySku !== null}
                   />
@@ -124,8 +137,10 @@ const styles = StyleSheet.create({
   checkRow: { color: COLORS.text, fontSize: 15, paddingVertical: 3 },
   check: { color: COLORS.good, fontWeight: "800" },
   planRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  planInfo: { flex: 1, marginRight: 12 },
   planName: { color: COLORS.text, fontSize: 16, fontWeight: "800" },
   planPrice: { color: COLORS.muted, fontSize: 13, marginTop: 2 },
+  trialText: { color: COLORS.pro, fontSize: 12, marginTop: 4, lineHeight: 16 },
   proActive: { color: COLORS.good, fontSize: 15, fontWeight: "800" },
   note: { color: COLORS.faint, fontSize: 12, lineHeight: 17, marginTop: 4 },
   error: { color: COLORS.bad, fontSize: 14, marginVertical: 8 },

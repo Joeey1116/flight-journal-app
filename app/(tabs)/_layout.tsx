@@ -1,36 +1,43 @@
 import React from "react";
-import { View } from "react-native";
-import { Redirect } from "expo-router";
 import { NativeTabs } from "expo-router/unstable-native-tabs";
-import { useAuth } from "../../lib/auth";
 
 /**
  * Bottom navigation is the OS's OWN tab bar (UITabBar on iOS, the
- * Material navigation bar on Android) instead of a hand-drawn pill.
- * On iOS 26 the system draws it as the floating Liquid Glass capsule —
- * the genuine article, rendered by Apple, not an imitation.
- * (Copied 1:1 from the proven Rewards/Snugbug setup, same
- * expo-router/react-native-screens versions; tab names adapted.)
+ * Material navigation bar on Android) — on iOS 26 the system draws it
+ * as the floating Liquid Glass capsule, the genuine Apple article.
+ * Mirrors the Motivation app's (tabs) layout 1:1 (same expo-router /
+ * react-native-screens versions), with Flight Journal's tab set and
+ * cyan branding in place of Motivation's theme palette.
  *
- * Session guard: the tabs exist ONLY behind a real signed-in session.
- * Any route that lands here without one is bounced to onboarding.
- * While the provider is still restoring the session, render the black
- * backdrop instead of flashing either the tabs or a redirect.
+ * TAB BAR BACKGROUND (mirrors Motivation build 34, Nov 24, 2026,
+ * on device): a solid bar showed behind the floating glass capsule —
+ * the native tab bar's opaque background, forced by
+ * `disableTransparentOnScrollEdge` on every trigger. That prop is NOT
+ * used here, and the bar's background is set transparent, so only the
+ * Liquid Glass capsule shows and the screen shows through around it.
+ *
+ * FOLLOW-UP (mirrors Motivation commit f6dcaf9, build 35, on device):
+ * on scrolled tabs a frosted box still showed behind the capsule,
+ * because a scrolled tab uses the STANDARD appearance, whose blur
+ * defaults to the system material — a full-width frosted panel.
+ * Fix: blurEffect "none" + shadowColor "transparent" on the
+ * navigator, so the standard appearance has no blur and no shadow
+ * line either. The capsule itself keeps its own system glass; only
+ * the panel goes. The thin light rim tracing the pill is the
+ * capsule's own glass edge and cannot be removed.
+ *
+ * No session guard: accounts were removed Nov 27, 2026 — the app
+ * opens straight into the logbook. The launch gate (app/index.tsx)
+ * sends first-run users through onboarding once, then here.
  *
  * Tabs: Dashboard / Logbook / Currency / Stats / More.
  */
 export default function TabsLayout() {
-  const { status } = useAuth();
-
-  if (status === "loading") {
-    return <View style={{ flex: 1, backgroundColor: "#05070D" }} />;
-  }
-  if (status !== "signedIn") {
-    return <Redirect href="/onboarding" />;
-  }
-
   return (
     <NativeTabs
+      backgroundColor="transparent"
+      blurEffect="none"
+      shadowColor="transparent"
       tintColor="#22D3EE"
       iconColor={{ default: "#666666", selected: "#22D3EE" }}
       labelStyle={{
@@ -41,7 +48,6 @@ export default function TabsLayout() {
       <NativeTabs.Trigger
         name="index"
         contentStyle={{ backgroundColor: "#05070D" }}
-        disableTransparentOnScrollEdge
       >
         <NativeTabs.Trigger.Label>Dashboard</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
@@ -52,7 +58,6 @@ export default function TabsLayout() {
       <NativeTabs.Trigger
         name="logbook"
         contentStyle={{ backgroundColor: "#05070D" }}
-        disableTransparentOnScrollEdge
       >
         <NativeTabs.Trigger.Label>Logbook</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
@@ -63,7 +68,6 @@ export default function TabsLayout() {
       <NativeTabs.Trigger
         name="currency"
         contentStyle={{ backgroundColor: "#05070D" }}
-        disableTransparentOnScrollEdge
       >
         <NativeTabs.Trigger.Label>Currency</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
@@ -74,7 +78,6 @@ export default function TabsLayout() {
       <NativeTabs.Trigger
         name="stats"
         contentStyle={{ backgroundColor: "#05070D" }}
-        disableTransparentOnScrollEdge
       >
         <NativeTabs.Trigger.Label>Stats</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
@@ -85,7 +88,6 @@ export default function TabsLayout() {
       <NativeTabs.Trigger
         name="more"
         contentStyle={{ backgroundColor: "#05070D" }}
-        disableTransparentOnScrollEdge
       >
         <NativeTabs.Trigger.Label>More</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon

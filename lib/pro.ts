@@ -196,7 +196,13 @@ export function usePro() {
   };
 }
 
-/** Free tier: 25 entries, no export, no cloud sync. Pro: unlimited + export + sync. */
+/** Subscriptions (Monthly / Yearly) carry the 7-day free trial.
+ * Lifetime is a one-time purchase — no trial. */
+export function isSubscriptionSku(sku: string): boolean {
+  return sku !== LIFETIME_SKU;
+}
+
+/** Free tier: 25 entries, no export. Pro: unlimited entries + PDF/CSV export. */
 export function canAddEntry(isPro: boolean, entryCount: number): boolean {
   return isPro || entryCount < FREE_ENTRY_LIMIT;
 }

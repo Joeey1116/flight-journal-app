@@ -2,22 +2,18 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Logo } from '../components/Logo';
-import { useAuth } from '../lib/auth';
+import { loadSettings } from '../lib/settings';
 
 /**
- * Auth gate: branded splash while AuthProvider restores the session,
- * then route on the resolved state — signed-in users to the tabs,
- * everyone else to onboarding. The gate no longer polls getSession():
- * the provider's restore already includes the persisted Firebase
- * session, so when status resolves, the answer is final. Sign back in
- * via the provider's transitions if a session appears later.
- * (Firebase auth has no deep-link flows — confirmation and password
- * reset complete on Firebase-hosted web pages — so there is no
- * deep-link branch here anymore.)
+ * Launch gate: branded splash, then route on the onboarding flag —
+ * returning users straight into the logbook tabs, first-run users to
+ * onboarding (welcome → value → Pro offer → tabs). There is no account
+ * or session check: accounts were removed Nov 27, 2026, and the app
+ * opens directly into the local logbook.
  */
-export default function AuthGate() {
-  const { status } = useAuth();
+export default function LaunchGate() {
   const [minSplashDone, setMinSplashDone] = useState(false);
+  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
 
   // Let the branding breathe for a moment.
   useEffect(() => {
@@ -26,13 +22,19 @@ export default function AuthGate() {
   }, []);
 
   useEffect(() => {
-    if (status === 'loading' || !minSplashDone) return;
-    if (status === 'signedIn') {
-      router.replace('/(tabs)');
-      return;
-    }
-    router.replace('/onboarding');
-  }, [status, minSplashDone]);
+    let cancelled = false;
+    void loadSettings().then((s) => {
+      if (!cancelled) setOnboardingComplete(s.onboardingComplete);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!minSplashDone || onboardingComplete === null) return;
+    router.replace(onboardingComplete ? '/(tabs)' : '/onboarding');
+  }, [minSplashDone, onboardingComplete]);
 
   return (
     <View style={styles.wrap}>

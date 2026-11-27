@@ -3,7 +3,7 @@
  * currency, and stats screens show real-looking content on first run.
  * The user can clear all demo data from More → Clear demo data.
  * Never shipped as the user's real logbook: seed only runs when the
- * store is completely empty AND no account has ever signed in.
+ * store is completely empty and has never been seeded.
  */
 import type { Aircraft, LogbookEntry, Qualification } from "./types";
 

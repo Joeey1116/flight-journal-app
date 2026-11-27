@@ -1,11 +1,10 @@
 /**
  * Store — the logbook's local data layer.
  *
- * Local-first: entries, aircraft, and qualifications live in AsyncStorage
- * and work fully offline. When a real Supabase project is configured,
- * syncToCloud() upserts them to the logbook_entries / aircraft /
- * qualifications tables (see supabase/migrations/001_flight_journal.sql).
- * Until then the app runs in demo mode with seed data on first launch.
+ * Local-only (Nov 27, 2026: accounts and cloud sync removed at Joey's
+ * direction): entries, aircraft, and qualifications live in AsyncStorage
+ * on this device and work fully offline. There is no backend.
+ * On first launch the store seeds demo data so every screen has content.
  *
  * Free tier: 25 entries (Pro removes the cap — see lib/pro.ts).
  */
@@ -19,7 +18,6 @@ import React, {
   type ReactNode,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { isSupabaseConfigured, supabase } from "./supabase";
 import { SEED_AIRCRAFT, SEED_ENTRIES, SEED_QUALIFICATIONS } from "./seed";
 import {
   newEntryId,
@@ -67,7 +65,6 @@ export interface LogbookStore {
   updateQualification: (id: string, patch: Partial<Qualification>) => Promise<void>;
   deleteQualification: (id: string) => Promise<void>;
   clearDemoData: () => Promise<void>;
-  syncToCloud: () => Promise<boolean>;
 }
 
 const Ctx = createContext<LogbookStore | null>(null);
@@ -225,25 +222,6 @@ export function LogbookProvider({ children }: { children: ReactNode }) {
     ]);
   }, []);
 
-  const syncToCloud = useCallback(async (): Promise<boolean> => {
-    // TODO: wire real Supabase sync once the project exists. Local-first
-    // until then — returns false so the UI can say "cloud sync needs
-    // a real project (Pro)".
-    if (!isSupabaseConfigured() || !supabase) return false;
-    try {
-      const { data: session } = await supabase.auth.getSession();
-      const userId = session.session?.user.id;
-      if (!userId) return false;
-      const rows = entries.map((e) => ({ ...e, user_id: userId }));
-      const { error } = await supabase
-        .from("logbook_entries")
-        .upsert(rows, { onConflict: "id" });
-      return !error;
-    } catch {
-      return false;
-    }
-  }, [entries]);
-
   const value = useMemo<LogbookStore>(
     () => ({
       loaded,
@@ -260,13 +238,12 @@ export function LogbookProvider({ children }: { children: ReactNode }) {
       updateQualification,
       deleteQualification,
       clearDemoData,
-      syncToCloud,
     }),
     [
       loaded, entries, aircraft, qualifications, addEntry, updateEntry,
       deleteEntry, addAircraft, updateAircraft, deleteAircraft,
       addQualification, updateQualification, deleteQualification,
-      clearDemoData, syncToCloud,
+      clearDemoData,
     ],
   );
 

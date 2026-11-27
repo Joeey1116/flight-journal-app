@@ -11,6 +11,9 @@ export interface Settings {
   defaultAircraftType: string;
   currencyReminders: boolean;
   notificationsEnabled: boolean;
+  /** True once the user has been through onboarding (welcome → Pro
+   * offer). The launch gate routes straight to the tabs when set. */
+  onboardingComplete: boolean;
 }
 
 const KEY = 'flightjournal:settings:v1';
@@ -21,6 +24,7 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultAircraftType: '',
   currencyReminders: true,
   notificationsEnabled: true,
+  onboardingComplete: false,
 };
 
 export async function loadSettings(): Promise<Settings> {

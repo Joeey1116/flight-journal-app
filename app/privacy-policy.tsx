@@ -11,7 +11,7 @@ import { Screen } from "../components/Screen";
 const SECTIONS: { title: string; body: string }[] = [
   {
     title: "What we store",
-    body: "Your flights, aircraft, qualifications, and profile are stored with your account (and on your device) so your logbook follows you across devices and survives a phone change.",
+    body: "Your flights, aircraft, qualifications, and profile are stored only on this device. There is no account and no server copy — your logbook lives on this phone, so export a PDF or CSV if you want a backup.",
   },
   {
     title: "What we do with it",
@@ -27,7 +27,7 @@ const SECTIONS: { title: string; body: string }[] = [
   },
   {
     title: "Deleting your data",
-    body: "Delete your account any time in Settings. Deleting your account removes your profile, flights, aircraft, and qualifications from our servers. Export first if you want to keep a copy.",
+    body: "Clear everything any time from More → Clear all data. That permanently deletes your flights, aircraft, and qualifications from this device. Export first if you want to keep a copy.",
   },
   {
     title: "Not an official record",

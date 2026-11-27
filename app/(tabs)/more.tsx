@@ -13,10 +13,9 @@ import { validateSimPayload, simPayloadToEntry } from "../../lib/sim-import";
 
 export default function MoreScreen() {
   const router = useRouter();
-  const { addEntry, clearDemoData, syncToCloud } = useLogbook();
+  const { addEntry, clearDemoData } = useLogbook();
   const [simJson, setSimJson] = useState("");
   const [simMsg, setSimMsg] = useState("");
-  const [syncMsg, setSyncMsg] = useState("");
 
   const importSim = async () => {
     setSimMsg("");
@@ -55,16 +54,6 @@ export default function MoreScreen() {
     );
   };
 
-  const onSync = async () => {
-    setSyncMsg("Syncing…");
-    const ok = await syncToCloud();
-    setSyncMsg(
-      ok
-        ? "Synced to the cloud."
-        : "Cloud sync needs a real Supabase project (Pro) — local data is safe.",
-    );
-  };
-
   return (
     <Screen>
       <Text style={styles.title}>MORE</Text>
@@ -97,16 +86,6 @@ export default function MoreScreen() {
         />
         <PrimaryButton title="Import sim flight" onPress={importSim} />
         {simMsg ? <Text style={styles.msg}>{simMsg}</Text> : null}
-      </Card>
-
-      <SectionTitle>Cloud sync</SectionTitle>
-      <Card>
-        <Text style={styles.body}>
-          Your logbook lives on this device. Pro adds cloud sync so it follows
-          you across devices.
-        </Text>
-        <PrimaryButton title="Sync now" onPress={onSync} />
-        {syncMsg ? <Text style={styles.msg}>{syncMsg}</Text> : null}
       </Card>
 
       <SectionTitle>Data</SectionTitle>

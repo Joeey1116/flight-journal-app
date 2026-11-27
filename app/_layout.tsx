@@ -8,7 +8,7 @@ import {
   setupForegroundPresentation,
   type NotificationTarget,
 } from '../lib/notifications';
-import { AuthProvider } from '../lib/auth';
+import { LogbookProvider } from '../lib/store';
 
 // Global JS error handler: in release builds a fatal error would otherwise
 // kill the app silently. Showing the message lets us diagnose from a
@@ -51,8 +51,9 @@ const TARGET_ROUTES: Record<NotificationTarget, string> = {
 export default function RootLayout() {
   const router = useRouter();
 
-  // Notification taps only. Auth — session restore, deep links, token
-  // upkeep, auth-driven navigation — is owned by AuthProvider (lib/auth).
+  // Notification taps only. There is no account/session layer anymore
+  // (removed Nov 27, 2026) — the launch gate in app/index.tsx routes on
+  // the onboarding-complete flag, and the logbook store is local.
   useEffect(() => {
     setupForegroundPresentation();
 
@@ -80,7 +81,7 @@ export default function RootLayout() {
   }, [router]);
 
   return (
-    <AuthProvider>
+    <LogbookProvider>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -91,8 +92,6 @@ export default function RootLayout() {
       >
         <Stack.Screen name="index" />
         <Stack.Screen name="onboarding" />
-        <Stack.Screen name="sign-in" />
-        <Stack.Screen name="sign-up" />
         <Stack.Screen name="privacy-policy" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="entry/new" />
@@ -103,6 +102,6 @@ export default function RootLayout() {
         <Stack.Screen name="pro" />
         <Stack.Screen name="settings" />
       </Stack>
-    </AuthProvider>
+    </LogbookProvider>
   );
 }
