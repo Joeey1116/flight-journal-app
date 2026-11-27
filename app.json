@@ -74,8 +74,19 @@
     "userInterfaceStyle": "dark",
     "version": "1.0.0",
     "web": {
+      "backgroundColor": "#05070D",
       "bundler": "metro",
-      "favicon": "./assets/favicon.png"
+      "description": "Flight Journal — a pilot logbook for airline and sim pilots: log flights, track currency, and export a print-ready logbook. No account, data stays on your device.",
+      "display": "standalone",
+      "favicon": "./assets/favicon.png",
+      "lang": "en",
+      "name": "Flight Journal",
+      "orientation": "portrait",
+      "output": "static",
+      "scope": "/",
+      "shortName": "Flight Journal",
+      "startUrl": "/",
+      "themeColor": "#05070D"
     }
   }
 }
