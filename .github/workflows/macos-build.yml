@@ -191,10 +191,22 @@ jobs:
 
       - name: Archive the Mac app (manual signing)
         # Step-level cap: a healthy archive finishes well under this.
-        # Single target (no App Clip on macOS), so passing
-        # PROVISIONING_PROFILE_SPECIFIER on the command line is safe
-        # here — unlike the iOS archive, which must NOT (it would
-        # override the clip's profile too).
+        # The provisioning profile is scoped IN THE PROJECT — the app
+        # target's Release configuration in
+        # macos/flight-journal-app.xcodeproj/project.pbxproj carries
+        # PROVISIONING_PROFILE_SPECIFIER = "FlightJournal - Pilot
+        # Logbook" — and is deliberately NOT passed on this command
+        # line: a command-line PROVISIONING_PROFILE_SPECIFIER applies
+        # to EVERY target in the workspace, and run #4 (Nov 27, 2026)
+        # failed validation with "OpenAP_OpenIAP does not support
+        # provisioning profiles" because Swift Package Manager targets
+        # (react-native-iap's OpenIAP, integrated via CocoaPods)
+        # cannot carry provisioning profiles. DEVELOPMENT_TEAM,
+        # CODE_SIGN_STYLE and CODE_SIGN_IDENTITY stay global here —
+        # they are harmless on SPM targets; run #4's only error was
+        # the profile. If the portal profile is ever renamed, update
+        # MAC_PROFILE_NAME (used by the export step below) AND the
+        # project setting above together.
         timeout-minutes: 50
         env:
           ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
@@ -214,7 +226,6 @@ jobs:
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="$DIST_SIGN_IDENTITY" \
-            PROVISIONING_PROFILE_SPECIFIER="$MAC_PROFILE_NAME" \
             MARKETING_VERSION="$APP_VERSION" \
             CURRENT_PROJECT_VERSION="$APP_BUILD"
 
