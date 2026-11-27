@@ -128,7 +128,8 @@ export default function NewEntryScreen() {
       return;
     }
     // The cap applies to the free tier. Pro removes it; the
-    // device-local owner unlock (lib/owner.ts) bypasses ONLY this cap.
+    // device-local owner unlock (lib/owner.ts) bypasses this cap
+    // too — it also turns Pro on, so isPro is already true then.
     if (!editing && !owner && !canAddEntry(isPro, entries.length)) {
       if (Platform.OS === "web") {
         // Web is free-tier only: state the limit plainly — no Pro

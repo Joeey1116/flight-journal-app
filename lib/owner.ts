@@ -1,11 +1,13 @@
 /**
  * Device-local owner unlock.
  *
- * Scope, deliberately tiny: it lifts ONLY the free entry-count cap on
- * this one device. It is NOT Pro — it touches no Pro state, unlocks no
- * Pro feature (export, ATP tracker, sim import stay exactly as gated),
- * and shows no label anywhere. It exists so the app's owner can log
- * without a cap on his own devices.
+ * Scope: on this one device it lifts the free entry-count cap AND
+ * turns Pro on (export, ATP tracker, sim import — every Pro gate),
+ * per Joey's explicit direction. Pro is NOT a second flag here: the
+ * toggle drives lib/pro.ts's single-sourced Pro store through its
+ * setPro() write path, the same one purchases and restores use, so
+ * every screen and gate agrees. Toggling the unlock off turns both
+ * back off together. It shows no label anywhere.
  *
  * There is intentionally no UI for it: no row, no menu, no copy. The
  * toggle is a hidden gesture on the More tab's version footer — seven
@@ -18,6 +20,7 @@
  */
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSyncExternalStore } from "react";
+import { setPro } from "./pro";
 
 const OWNER_KEY = "flightjournal:owner:v1";
 
@@ -44,6 +47,10 @@ function ensureLoaded(): void {
       if (v === "1" && !ownerState) {
         ownerState = true;
         emit();
+        // Keep the invariant across restarts (incl. devices where a
+        // pre-Pro build of this unlock persisted the flag on its
+        // own): owner on means Pro on, via the same write path.
+        void setPro(true);
       }
     })
     .catch(() => {
@@ -71,6 +78,9 @@ export async function setOwner(on: boolean): Promise<void> {
   try {
     if (on) await AsyncStorage.setItem(OWNER_KEY, "1");
     else await AsyncStorage.removeItem(OWNER_KEY);
+    // Pro follows the unlock, through lib/pro.ts's own write path —
+    // no separate Pro state lives here.
+    await setPro(on);
   } catch {
     // Best-effort; the in-memory state is already updated.
   }

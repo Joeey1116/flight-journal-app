@@ -105,17 +105,15 @@ function ensureProLoaded() {
   });
 }
 
-async function setPro(value: boolean): Promise<void> {
+/** The single write path into the Pro store — mirrors lib/pro.ts;
+ * the owner unlock (lib/owner.ts) drives Pro through here too. */
+export async function setPro(value: boolean): Promise<void> {
   if (proSnapshot !== value) {
     proSnapshot = value;
     emitPro();
   }
   await saveProLocal(value);
 }
-
-// Referenced by restore parity with lib/pro.ts; on macOS the store is
-// never connected, so restore() below returns before reaching it.
-void setPro;
 
 // ---- Purchase / restore results ----
 

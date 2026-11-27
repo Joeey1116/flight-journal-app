@@ -136,7 +136,14 @@ function ensureProLoaded() {
   });
 }
 
-async function setPro(value: boolean): Promise<void> {
+/**
+ * The single write path into the Pro store — purchase and restore
+ * flows call it, and so does the device-local owner unlock
+ * (lib/owner.ts), which turns Pro on/off through here rather than
+ * keeping any Pro flag of its own. Every gate reads the snapshot
+ * this updates, so all of them agree the moment it changes.
+ */
+export async function setPro(value: boolean): Promise<void> {
   if (proSnapshot !== value) {
     proSnapshot = value;
     emitPro();
