@@ -99,6 +99,26 @@ export function SecondaryButton({
   );
 }
 
+/**
+ * NavRow — a navigation list row (More page): panel-filled, title on
+ * the left, chevron on the right. Visually distinct from action
+ * buttons so menu pages read as menus, not stacks of buttons.
+ */
+export function NavRow({
+  title,
+  onPress,
+}: {
+  title: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable style={styles.navRow} onPress={onPress}>
+      <Text style={styles.navRowText}>{title}</Text>
+      <Text style={styles.navRowChevron}>›</Text>
+    </Pressable>
+  );
+}
+
 export function Row({ children }: { children: ReactNode }) {
   return <View style={styles.row}>{children}</View>;
 }
@@ -161,24 +181,59 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     fontFamily: FONT.regular,
   },
+  // One button system app-wide: same height (52), same radius (12),
+  // same horizontal padding (20) for primary and secondary, so labels
+  // always sit fully inside their button.
   primary: {
     backgroundColor: COLORS.accent,
     borderRadius: 12,
+    minHeight: 52,
     paddingVertical: 14,
+    paddingHorizontal: 20,
     alignItems: "center",
+    justifyContent: "center",
     marginTop: 6,
   },
   primaryDisabled: { opacity: 0.45 },
-  primaryText: { color: "#04121A", fontSize: 16, fontWeight: "800" },
+  primaryText: {
+    color: "#04121A",
+    fontSize: 16,
+    fontWeight: "800",
+    textAlign: "center",
+  },
   secondary: {
+    backgroundColor: COLORS.panel,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 12,
-    paddingVertical: 12,
+    minHeight: 52,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     alignItems: "center",
+    justifyContent: "center",
     marginTop: 8,
   },
-  secondaryText: { color: COLORS.text, fontSize: 15, fontWeight: "700" },
+  secondaryText: {
+    color: COLORS.text,
+    fontSize: 15,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  navRow: {
+    backgroundColor: COLORS.panel,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    minHeight: 56,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  navRowText: { color: COLORS.text, fontSize: 16, fontWeight: "600" },
+  navRowChevron: { color: COLORS.muted, fontSize: 22, fontWeight: "600" },
   row: { flexDirection: "row", gap: 10 },
   stat: { flex: 1, alignItems: "center", paddingVertical: 4 },
   statValue: { color: COLORS.text, fontSize: 24, fontWeight: "800" },

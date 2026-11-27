@@ -192,6 +192,17 @@ export default function Onboarding() {
   return (
     <OnboardingBackground>
       <Screen transparentBackground>
+        {page > 0 && (
+          <TouchableOpacity
+            style={styles.pageBack}
+            onPress={() => setPage(page - 1)}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            hitSlop={10}
+          >
+            <Text style={styles.pageBackText}>‹ Back</Text>
+          </TouchableOpacity>
+        )}
         {page === 0 && (
           <View style={styles.page}>
             <View style={styles.hero}>
@@ -243,8 +254,8 @@ export default function Onboarding() {
               </Text>
               <Text style={styles.stepText}>
                 {Platform.OS === "web"
-                  ? "• Your data is yours — delete it any time from the More tab."
-                  : "• Your data is yours — export it any time, delete it any time from the More tab."}
+                  ? "• Your data is yours — delete entries any time, or uninstall the app to erase everything on this device."
+                  : "• Your data is yours — export it any time; delete entries any time, or uninstall the app to erase everything on this device."}
               </Text>
               {Platform.OS !== "web" && (
                 <Text style={styles.stepText}>
@@ -372,6 +383,8 @@ export default function Onboarding() {
 
 const styles = StyleSheet.create({
   bgWrap: { flex: 1, backgroundColor: "#000000" },
+  pageBack: { alignSelf: "flex-start", paddingVertical: 6, marginBottom: 6 },
+  pageBackText: { color: "#22D3EE", fontSize: 16, fontWeight: "700" },
   page: { flex: 1, justifyContent: "center" },
   hero: { alignItems: "center", marginBottom: 24 },
   brand: {
@@ -465,6 +478,5 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "center",
     marginTop: 16,
-    textDecorationLine: "underline",
   },
 });

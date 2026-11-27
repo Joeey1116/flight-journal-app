@@ -4,9 +4,9 @@
  * Local-only (Nov 27, 2026: accounts and cloud sync removed at Joey's
  * direction): entries, aircraft, and qualifications live in AsyncStorage
  * on this device and work fully offline. There is no backend.
- * On first launch the store seeds demo data so every screen has content
- * — EXCEPT on web: the web version starts at zero, no seed data, the
- * user adds their own flights (Joey's standing rule for web).
+ * There is NO seed/demo data on any platform (removed Nov 27, 2026 at
+ * Joey's direction): a fresh install starts with a completely empty
+ * logbook, and only flights the user adds are ever shown.
  *
  * Free tier: FREE_ENTRY_LIMIT entries (Pro removes the cap — see lib/pro.ts).
  */
@@ -20,8 +20,6 @@ import React, {
   type ReactNode,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Platform } from "react-native";
-import { SEED_AIRCRAFT, SEED_ENTRIES, SEED_QUALIFICATIONS } from "./seed";
 import {
   newEntryId,
   newId,
@@ -33,7 +31,6 @@ import {
 const ENTRIES_KEY = "flightjournal:entries:v1";
 const AIRCRAFT_KEY = "flightjournal:aircraft:v1";
 const QUALS_KEY = "flightjournal:quals:v1";
-const SEEDED_KEY = "flightjournal:seeded:v1";
 
 async function readJson<T>(key: string, fallback: T): Promise<T> {
   try {
@@ -67,7 +64,6 @@ export interface LogbookStore {
   addQualification: (q: Omit<Qualification, "id">) => Promise<Qualification>;
   updateQualification: (id: string, patch: Partial<Qualification>) => Promise<void>;
   deleteQualification: (id: string) => Promise<void>;
-  clearDemoData: () => Promise<void>;
 }
 
 const Ctx = createContext<LogbookStore | null>(null);
@@ -80,34 +76,16 @@ export function LogbookProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      const [e, a, q, seeded] = await Promise.all([
+      const [e, a, q] = await Promise.all([
         readJson<LogbookEntry[]>(ENTRIES_KEY, []),
         readJson<Aircraft[]>(AIRCRAFT_KEY, []),
         readJson<Qualification[]>(QUALS_KEY, []),
-        AsyncStorage.getItem(SEEDED_KEY),
       ]);
-      if (e.length === 0 && !seeded && Platform.OS !== "web") {
-        // First launch ever (native): seed demo data so every screen
-        // has content. Web never seeds — it starts at zero.
-        setEntries(SEED_ENTRIES);
-        setAircraft(SEED_AIRCRAFT);
-        setQualifications(SEED_QUALIFICATIONS);
-        await Promise.all([
-          writeJson(ENTRIES_KEY, SEED_ENTRIES),
-          writeJson(AIRCRAFT_KEY, SEED_AIRCRAFT),
-          writeJson(QUALS_KEY, SEED_QUALIFICATIONS),
-          AsyncStorage.setItem(SEEDED_KEY, "1"),
-        ]);
-      } else {
-        if (e.length === 0 && !seeded) {
-          // Web first run: stay empty; mark seeded so the native-only
-          // seeding can never fire here later.
-          await AsyncStorage.setItem(SEEDED_KEY, "1");
-        }
-        setEntries(e);
-        setAircraft(a);
-        setQualifications(q);
-      }
+      // No seeding, ever: whatever is stored is what the user added.
+      // Fresh storage means a completely empty logbook.
+      setEntries(e);
+      setAircraft(a);
+      setQualifications(q);
       setLoaded(true);
     })();
   }, []);
@@ -219,18 +197,6 @@ export function LogbookProvider({ children }: { children: ReactNode }) {
     [qualifications, persist],
   );
 
-  const clearDemoData = useCallback(async () => {
-    setEntries([]);
-    setAircraft([]);
-    setQualifications([]);
-    await Promise.all([
-      writeJson(ENTRIES_KEY, []),
-      writeJson(AIRCRAFT_KEY, []),
-      writeJson(QUALS_KEY, []),
-      AsyncStorage.setItem(SEEDED_KEY, "1"),
-    ]);
-  }, []);
-
   const value = useMemo<LogbookStore>(
     () => ({
       loaded,
@@ -246,13 +212,11 @@ export function LogbookProvider({ children }: { children: ReactNode }) {
       addQualification,
       updateQualification,
       deleteQualification,
-      clearDemoData,
     }),
     [
       loaded, entries, aircraft, qualifications, addEntry, updateEntry,
       deleteEntry, addAircraft, updateAircraft, deleteAircraft,
       addQualification, updateQualification, deleteQualification,
-      clearDemoData,
     ],
   );
 

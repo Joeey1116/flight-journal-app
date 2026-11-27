@@ -28,7 +28,7 @@ const SECTIONS: { title: string; body: string }[] = [
   },
   {
     title: "Deleting your data",
-    body: "Clear everything any time from More → Clear all data. That permanently deletes your flights, aircraft, and qualifications from this device. Export first if you want to keep a copy.",
+    body: "Delete flights, aircraft, and qualifications one by one from their pages in the app — each has a delete option. To erase everything on this device at once, uninstall the app. Export first if you want to keep a copy.",
   },
   {
     title: "Not an official record",

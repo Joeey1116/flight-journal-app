@@ -1,14 +1,13 @@
 /**
  * More — aircraft, qualifications, export, Pro, settings, and the
- * companion-sim import. Plus demo-data cleanup.
+ * companion-sim import.
  */
 import { useRef, useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import Constants from "expo-constants";
 import { useRouter } from "expo-router";
 import { Screen } from "../../components/Screen";
-import { confirmAction } from "../../lib/dialog";
-import { Card, PrimaryButton, SecondaryButton, SectionTitle } from "../../components/ui";
+import { Card, NavRow, PrimaryButton, SecondaryButton, SectionTitle } from "../../components/ui";
 import { COLORS } from "../../lib/theme";
 import { useLogbook } from "../../lib/store";
 import { usePro } from "../../lib/pro";
@@ -17,7 +16,7 @@ import { validateSimPayload, simPayloadToEntry } from "../../lib/sim-import";
 
 export default function MoreScreen() {
   const router = useRouter();
-  const { addEntry, clearDemoData } = useLogbook();
+  const { addEntry } = useLogbook();
   const { isPro } = usePro();
   const owner = useOwner();
   // Hidden gesture on the version footer (see lib/owner.ts): seven
@@ -61,18 +60,6 @@ export default function MoreScreen() {
     setSimMsg(`Imported ${result.payload.departure} → ${result.payload.arrival} (${result.payload.totalTime}h, sim).`);
   };
 
-  const onClearDemo = async () => {
-    const ok = await confirmAction({
-      title: "Clear all data?",
-      message: "This deletes every flight, aircraft, and qualification on this device.",
-      confirmText: "Delete everything",
-      destructive: true,
-    });
-    if (!ok) return;
-    await clearDemoData();
-    setSimMsg("All data cleared.");
-  };
-
   return (
     <Screen>
       <Text style={styles.title}>MORE</Text>
@@ -83,21 +70,21 @@ export default function MoreScreen() {
       </Text>
 
       <SectionTitle>Manage</SectionTitle>
-      <SecondaryButton title="Aircraft" onPress={() => router.push("/aircraft")} />
-      <SecondaryButton title="Qualifications & medical" onPress={() => router.push("/qualifications")} />
+      <NavRow title="Aircraft" onPress={() => router.push("/aircraft")} />
+      <NavRow title="Qualifications & medical" onPress={() => router.push("/qualifications")} />
       {/* Web is free-tier only (Joey's rule): no Export (a Pro feature),
           no Go Pro row, no sim import — none of the Pro surface exists
           on web. */}
       {Platform.OS !== "web" && (
         <>
-          <SecondaryButton title="Export (PDF / CSV)" onPress={() => router.push("/export")} />
-          <SecondaryButton
+          <NavRow title="Export (PDF / CSV)" onPress={() => router.push("/export")} />
+          <NavRow
             title={isPro ? "Pro is active ✓" : "Go Pro"}
             onPress={() => router.push("/pro")}
           />
         </>
       )}
-      <SecondaryButton title="Settings" onPress={() => router.push("/settings")} />
+      <NavRow title="Settings" onPress={() => router.push("/settings")} />
 
       {Platform.OS !== "web" && (
         <>
@@ -136,8 +123,6 @@ export default function MoreScreen() {
         </>
       )}
 
-      <SectionTitle>Data</SectionTitle>
-      <SecondaryButton title="Clear all data (incl. demo flights)" onPress={onClearDemo} />
       <View style={{ height: 24 }} />
       <Pressable
         onPress={onVersionPress}

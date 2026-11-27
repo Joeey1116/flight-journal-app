@@ -136,28 +136,24 @@ export default function ProScreen() {
             const price = p?.displayPrice ?? SKU_PRICES[sku] ?? "";
             return (
               <Card key={sku}>
-                <View style={styles.planRow}>
-                  <View style={styles.planInfo}>
-                    <Text style={styles.planName}>{SKU_NAMES[sku] ?? sku}</Text>
-                    <Text style={styles.planPrice}>{price}</Text>
-                    <Text style={styles.trialText}>
-                      {trial
-                        ? `Free for 7 days, then ${price} — cancel anytime`
-                        : "One-time purchase — yours forever"}
-                    </Text>
-                  </View>
-                  <PrimaryButton
-                    title={
-                      busySku === sku
-                        ? "…"
-                        : trial
-                          ? "Start 7-day free trial"
-                          : "Get Pro"
-                    }
-                    onPress={() => onBuy(sku)}
-                    disabled={busySku !== null}
-                  />
-                </View>
+                <Text style={styles.planName}>{SKU_NAMES[sku] ?? sku}</Text>
+                <Text style={styles.planPrice}>{price}</Text>
+                <Text style={styles.trialText}>
+                  {trial
+                    ? `Free for 7 days, then ${price} — cancel anytime`
+                    : "One-time purchase — yours forever"}
+                </Text>
+                <PrimaryButton
+                  title={
+                    busySku === sku
+                      ? "…"
+                      : trial
+                        ? "Start 7-day free trial"
+                        : "Get Pro"
+                  }
+                  onPress={() => onBuy(sku)}
+                  disabled={busySku !== null}
+                />
               </Card>
             );
           })}
@@ -181,11 +177,9 @@ const styles = StyleSheet.create({
   sub: { color: COLORS.muted, fontSize: 13, marginBottom: 14, marginTop: 2 },
   checkRow: { color: COLORS.text, fontSize: 15, paddingVertical: 3 },
   check: { color: COLORS.good, fontWeight: "800" },
-  planRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  planInfo: { flex: 1, marginRight: 12 },
   planName: { color: COLORS.text, fontSize: 16, fontWeight: "800" },
   planPrice: { color: COLORS.muted, fontSize: 13, marginTop: 2 },
-  trialText: { color: COLORS.pro, fontSize: 12, marginTop: 4, lineHeight: 16 },
+  trialText: { color: COLORS.pro, fontSize: 12, marginTop: 4, lineHeight: 16, marginBottom: 4 },
   proActive: { color: COLORS.good, fontSize: 15, fontWeight: "800" },
   webNote: { color: COLORS.muted, fontSize: 14, lineHeight: 20 },
   note: { color: COLORS.faint, fontSize: 12, lineHeight: 17, marginTop: 4 },
