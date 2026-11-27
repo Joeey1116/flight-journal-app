@@ -31,7 +31,10 @@
     "react-native-web": "^0.21.4"
   },
   "devDependencies": {
+    "@react-native-community/cli": "^20.2.0",
+    "@react-native/metro-config": "^0.86.3",
     "@types/react": "~19.2.0",
+    "react-native-macos": "^0.83.0",
     "typescript": "~6.0.3"
   },
   "main": "expo-router/entry",
@@ -40,6 +43,7 @@
   "scripts": {
     "android": "expo run:android",
     "ios": "expo run:ios",
+    "run:macos": "react-native run-macos",
     "start": "expo start",
     "typecheck": "tsc --noEmit",
     "web": "expo start --web"
