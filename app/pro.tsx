@@ -105,7 +105,9 @@ export default function ProScreen() {
       <BackButton fallback="/(tabs)/more" />
       <Text style={styles.title}>GO PRO</Text>
       <Text style={styles.sub}>
-        {entries.length} of {FREE_ENTRY_LIMIT} free entries used
+        {isPro
+          ? `${entries.length} of Unlimited entries used`
+          : `${entries.length} of ${FREE_ENTRY_LIMIT} free entries used`}
       </Text>
 
       <Card>
