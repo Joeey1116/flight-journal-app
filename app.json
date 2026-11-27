@@ -9,7 +9,7 @@
         "com.google.android.gms.permission.AD_ID"
       ],
       "package": "com.beatrackfaminc.flightjournal",
-      "versionCode": 1004
+      "versionCode": 1005
     },
     "extra": {
       "eas": {
@@ -18,7 +18,7 @@
     },
     "icon": "./assets/icon.png",
     "ios": {
-      "buildNumber": "1004",
+      "buildNumber": "1005",
       "bundleIdentifier": "com.beatrackfaminc.flightjournal",
       "deploymentTarget": "16.4",
       "infoPlist": {
