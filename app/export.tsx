@@ -5,13 +5,16 @@
  * files download from the preview instead.
  */
 import { useState } from "react";
-import { Alert, Platform, StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Screen } from "../components/Screen";
+import { BackButton } from "../components/BackButton";
+import { confirmAction, showAlert } from "../lib/dialog";
 import { Card, PrimaryButton, SecondaryButton, SectionTitle } from "../components/ui";
 import { COLORS } from "../lib/theme";
 import { useLogbook } from "../lib/store";
 import { usePro } from "../lib/pro";
+import { FREE_ENTRY_LIMIT } from "../lib/types";
 import { buildCSV, buildLogbookHTML, shareLogbookPDF, shareTextFile } from "../lib/export";
 import { sumEntries } from "../lib/totals";
 import { loadSettings } from "../lib/settings";
@@ -30,23 +33,28 @@ export default function ExportScreen() {
 
   const totals = sumEntries(entries);
 
-  const needPro = () => {
+  const needPro = async (): Promise<boolean> => {
     if (!isPro) {
-      Alert.alert(
-        "Pro feature",
-        "Export (PDF + CSV) is part of Pro. Free logging covers 25 entries.",
-        [
-          { text: "Not now", style: "cancel" },
-          { text: "See Pro", onPress: () => router.push("/pro") },
-        ],
-      );
+      if (Platform.OS === "web") {
+        // Web is free-tier only — plain statement of fact, no upsell,
+        // no purchase CTA.
+        showAlert("Export is a Pro feature", "It's not part of this free web version.");
+        return true;
+      }
+      const seePro = await confirmAction({
+        title: "Pro feature",
+        message: `Export (PDF + CSV) is part of Pro. Free logging covers ${FREE_ENTRY_LIMIT} entries.`,
+        confirmText: "See Pro",
+        cancelText: "Not now",
+      });
+      if (seePro) router.push("/pro");
       return true;
     }
     return false;
   };
 
   const exportCSV = async () => {
-    if (needPro()) return;
+    if (await needPro()) return;
     const csv = buildCSV(entries);
     if (Platform.OS === "web") {
       const blob = new Blob([csv], { type: "text/csv" });
@@ -64,7 +72,7 @@ export default function ExportScreen() {
   };
 
   const exportPDF = async () => {
-    if (needPro()) return;
+    if (await needPro()) return;
     const html = buildLogbookHTML(entries, totals, pilotName);
     if (Platform.OS === "web") {
       const blob = new Blob([html], { type: "text/html" });
@@ -83,6 +91,7 @@ export default function ExportScreen() {
 
   return (
     <Screen>
+      <BackButton fallback="/(tabs)/more" />
       <Text style={styles.title}>EXPORT</Text>
       <Text style={styles.sub}>
         {entries.length} flights · {totals.totalTime.toFixed(1)} hours total
@@ -97,7 +106,7 @@ export default function ExportScreen() {
         <Text style={styles.body}>
           {isPro
             ? "Pro is active — export is unlocked."
-            : "Export is a Pro feature. Free logging covers 25 entries."}
+            : `Export is a Pro feature. Free logging covers ${FREE_ENTRY_LIMIT} entries.`}
         </Text>
       </Card>
 
@@ -105,7 +114,7 @@ export default function ExportScreen() {
       <PrimaryButton title="Export CSV" onPress={exportCSV} />
       <PrimaryButton title="Export PDF (logbook format)" onPress={exportPDF} />
       {status ? <Text style={styles.status}>{status}</Text> : null}
-      {!isPro ? (
+      {!isPro && Platform.OS !== "web" ? (
         <SecondaryButton title="See Pro plans" onPress={() => router.push("/pro")} />
       ) : null}
       <View style={{ height: 24 }} />

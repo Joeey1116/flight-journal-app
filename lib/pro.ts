@@ -4,12 +4,27 @@
  * the outcome arrives through purchaseUpdatedListener).
  *
  * TODO (Joey): create these exact product IDs in App Store Connect /
- * Play Console before wiring live purchases. Until then the hook runs
- * in demo mode — products resolve to their local fallback info and
- * purchases are simulated locally so every screen can be tested.
- * Do NOT wire real store products yet.
+ * Play Console before wiring live purchases. Until then there is NO
+ * store connection ("demo mode"): products resolve to their local
+ * fallback info, and — per Joey's explicit direction — the paywall
+ * must NOT grant Pro for free. Buy/restore report "unavailable" and
+ * the screens explain that purchases open at store launch. When real
+ * products exist, the react-native-iap flow below takes over,
+ * including the stores' real 7-day introductory trial.
+ *
+ * Pro STATE is single-sourced: one module-level store (persisted to
+ * AsyncStorage) that every screen reads through useSyncExternalStore,
+ * so the paywall, More, Settings, and every feature gate always agree
+ * and update live — previously each screen kept its own copy loaded
+ * on mount, and the More tab didn't read Pro state at all.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
@@ -52,6 +67,14 @@ export const SKU_PRICES: Record<string, string> = {
   flightjournalpro_lifetime: "$99.99 once",
 };
 
+/** Shared copy for the demo-mode (no store products yet) state. */
+export const PRO_NOT_ON_SALE_TITLE = "Pro isn't on sale yet";
+export const PRO_NOT_ON_SALE_MESSAGE =
+  "Purchases open when Flight Journal launches in the app stores.";
+export const PRO_NOTHING_TO_RESTORE_TITLE = "Nothing to restore yet";
+export const PRO_NOTHING_TO_RESTORE_MESSAGE =
+  "Pro purchases open when Flight Journal launches in the app stores.";
+
 const PRO_KEY = "flightjournal:pro:v1";
 
 type PendingPurchase = { sku: string; resolve: (ok: boolean) => void };
@@ -81,19 +104,71 @@ async function saveProLocal(value: boolean): Promise<void> {
   }
 }
 
+// ---- Shared Pro state: the single source of truth ----
+
+let proSnapshot = false;
+let proLoadStarted = false;
+const proSubscribers = new Set<() => void>();
+
+function emitPro() {
+  proSubscribers.forEach((cb) => cb());
+}
+
+function subscribePro(cb: () => void) {
+  proSubscribers.add(cb);
+  return () => {
+    proSubscribers.delete(cb);
+  };
+}
+
+function getProSnapshot() {
+  return proSnapshot;
+}
+
+function ensureProLoaded() {
+  if (proLoadStarted) return;
+  proLoadStarted = true;
+  void loadProLocal().then((v) => {
+    if (v !== proSnapshot) {
+      proSnapshot = v;
+      emitPro();
+    }
+  });
+}
+
+async function setPro(value: boolean): Promise<void> {
+  if (proSnapshot !== value) {
+    proSnapshot = value;
+    emitPro();
+  }
+  await saveProLocal(value);
+}
+
+function useSharedPro(): boolean {
+  const isPro = useSyncExternalStore(subscribePro, getProSnapshot, getProSnapshot);
+  useEffect(() => {
+    ensureProLoaded();
+  }, []);
+  return isPro;
+}
+
+// ---- Purchase / restore results ----
+
+/** "unavailable" = demo mode: no store products exist yet, nothing was
+ * charged and Pro was NOT granted. */
+export type BuyResult = "purchased" | "unavailable" | "failed";
+export type RestoreResult = "restored" | "none" | "unavailable";
+
 export function usePro() {
   const { connected, products, requestPurchase, finishTransaction, fetchProducts } =
     useIAP();
-  const [isPro, setIsPro] = useState(false);
+  const isPro = useSharedPro();
   const [busySku, setBusySku] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const mounted = useRef(true);
 
   useEffect(() => {
     mounted.current = true;
-    void loadProLocal().then((v) => {
-      if (mounted.current) setIsPro(v);
-    });
     return () => {
       mounted.current = false;
     };
@@ -110,8 +185,7 @@ export function usePro() {
       try {
         await finishTxRef?.({ purchase, isConsumable: false });
         if (SKUS.includes(purchase.productId)) {
-          await saveProLocal(true);
-          if (mounted.current) setIsPro(true);
+          await setPro(true);
         }
         settlePending(true);
       } catch {
@@ -142,27 +216,26 @@ export function usePro() {
   }, [fetchProducts]);
 
   const buy = useCallback(
-    async (sku: string): Promise<boolean> => {
+    async (sku: string): Promise<BuyResult> => {
       setError(null);
+      if (!connected) {
+        // Demo mode — no store products exist yet. NEVER grant Pro
+        // here (Joey: "I want people to pay. I don't want it to just
+        // give people the free option."). The caller explains the
+        // not-on-sale state to the user.
+        return "unavailable";
+      }
       setBusySku(sku);
       try {
-        if (!connected) {
-          // Demo mode (no store connection in this scaffold): simulate the
-          // purchase locally so the Pro flow can be tested end to end.
-          await new Promise((r) => setTimeout(r, 600));
-          await saveProLocal(true);
-          if (mounted.current) setIsPro(true);
-          return true;
-        }
         const result = new Promise<boolean>((resolve) => {
           pendingPurchase = { sku, resolve };
         });
         await requestPurchase({ request: { apple: { sku }, google: { skus: [sku] } } } as never);
-        return await result;
+        return (await result) ? "purchased" : "failed";
       } catch (e) {
         const err = e as { message?: string };
         if (mounted.current) setError(err?.message ?? "Purchase failed.");
-        return false;
+        return "failed";
       } finally {
         if (mounted.current) setBusySku(null);
       }
@@ -170,19 +243,23 @@ export function usePro() {
     [connected, requestPurchase],
   );
 
-  const restore = useCallback(async (): Promise<boolean> => {
+  const restore = useCallback(async (): Promise<RestoreResult> => {
+    if (!connected) {
+      // Demo mode: there is no store to restore from.
+      return "unavailable";
+    }
     try {
       const purchases = await queryAvailablePurchases();
       const owned = purchases.some((p) => SKUS.includes(p.productId));
       if (owned) {
-        await saveProLocal(true);
-        if (mounted.current) setIsPro(true);
+        await setPro(true);
+        return "restored";
       }
-      return owned;
+      return "none";
     } catch {
-      return await loadProLocal();
+      return (await loadProLocal()) ? "restored" : "none";
     }
-  }, []);
+  }, [connected]);
 
   return {
     isPro,
@@ -202,7 +279,7 @@ export function isSubscriptionSku(sku: string): boolean {
   return sku !== LIFETIME_SKU;
 }
 
-/** Free tier: 25 entries, no export. Pro: unlimited entries + PDF/CSV export. */
+/** Free tier: FREE_ENTRY_LIMIT entries, no export. Pro: unlimited entries + PDF/CSV export. */
 export function canAddEntry(isPro: boolean, entryCount: number): boolean {
   return isPro || entryCount < FREE_ENTRY_LIMIT;
 }

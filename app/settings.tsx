@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Platform, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { router } from "expo-router";
 import { Screen } from "../components/Screen";
+import { BackButton } from "../components/BackButton";
 import { GlassCard } from "../components/GlassCard";
 import { loadSettings, saveSettings, type Settings } from "../lib/settings";
 import { usePro } from "../lib/pro";
+import { FREE_ENTRY_LIMIT } from "../lib/types";
 
 /**
  * Settings — pilot profile and preferences, all on-device.
@@ -23,6 +25,7 @@ export default function SettingsScreen() {
   if (!settings) {
     return (
       <Screen>
+        <BackButton fallback="/(tabs)/more" />
         <Text style={styles.loading}>Loading…</Text>
       </Screen>
     );
@@ -35,6 +38,7 @@ export default function SettingsScreen() {
 
   return (
     <Screen>
+      <BackButton fallback="/(tabs)/more" />
       <Text style={styles.headline}>Settings</Text>
       <Text style={styles.subline}>Your profile, your preferences — all on this device.</Text>
 
@@ -106,9 +110,10 @@ export default function SettingsScreen() {
       <GlassCard style={styles.card}>
         <Text style={styles.label}>PLAN</Text>
         <Text style={styles.planText}>
-          {isPro ? "Flight Journal Pro — thank you!" : "Free — up to 25 flights logged."}
+          {isPro ? "Flight Journal Pro — thank you!" : `Free — up to ${FREE_ENTRY_LIMIT} flights logged.`}
         </Text>
-        {!isPro && (
+        {/* No Pro upsell on web — the web version is free-tier only. */}
+        {!isPro && Platform.OS !== "web" && (
           <TouchableOpacity style={styles.primary} onPress={() => router.push("/pro")}>
             <Text style={styles.primaryText}>Go Pro</Text>
           </TouchableOpacity>

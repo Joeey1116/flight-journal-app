@@ -3,18 +3,22 @@
  * Every field a real pilot logs: date, aircraft, route, block times,
  * time breakouts, landings, approaches, holds, sim flag, remarks.
  * Edit mode: opened with ?id=<entry id>; saves update the entry.
- * Free tier: 25 entries; the 26th new entry is blocked with a Pro prompt.
+ * Free tier: FREE_ENTRY_LIMIT entries; the next new entry past the cap
+ * is blocked (plain message on web, Pro prompt on native).
  */
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Screen } from "../../components/Screen";
+import { BackButton } from "../../components/BackButton";
+import { confirmAction } from "../../lib/dialog";
 import { Field, NumberField, PrimaryButton, Row, SectionTitle } from "../../components/ui";
 import { COLORS } from "../../lib/theme";
 import { useLogbook } from "../../lib/store";
 import { canAddEntry, usePro } from "../../lib/pro";
+import { useOwner } from "../../lib/owner";
 import { formatDate } from "../../lib/totals";
-import type { LogbookEntry } from "../../lib/types";
+import { FREE_ENTRY_LIMIT, type LogbookEntry } from "../../lib/types";
 
 const num = (s: string) => {
   const v = parseFloat(s);
@@ -74,6 +78,7 @@ export default function NewEntryScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
   const { entries, addEntry, updateEntry, aircraft } = useLogbook();
   const { isPro } = usePro();
+  const owner = useOwner();
   const editing = useMemo(
     () => entries.find((e) => e.id === params.id),
     [entries, params.id],
@@ -122,15 +127,23 @@ export default function NewEntryScreen() {
       setError("Arrival must be a 4-letter ICAO code (e.g. KMIA).");
       return;
     }
-    if (!editing && !canAddEntry(isPro, entries.length)) {
-      Alert.alert(
-        "Free limit reached",
-        "Free logging covers 25 entries. Go Pro for unlimited entries and PDF/CSV export.",
-        [
-          { text: "Not now", style: "cancel" },
-          { text: "See Pro", onPress: () => router.push("/pro") },
-        ],
-      );
+    // The cap applies to the free tier. Pro removes it; the
+    // device-local owner unlock (lib/owner.ts) bypasses ONLY this cap.
+    if (!editing && !owner && !canAddEntry(isPro, entries.length)) {
+      if (Platform.OS === "web") {
+        // Web is free-tier only: state the limit plainly — no Pro
+        // upsell, no purchase CTA.
+        setError(`You've reached the free limit of ${FREE_ENTRY_LIMIT} entries.`);
+        return;
+      }
+      const seePro = await confirmAction({
+        title: "Free limit reached",
+        message:
+          `Free logging covers ${FREE_ENTRY_LIMIT} entries. Go Pro for unlimited entries and PDF/CSV export.`,
+        confirmText: "See Pro",
+        cancelText: "Not now",
+      });
+      if (seePro) router.push("/pro");
       return;
     }
     const data = {
@@ -172,6 +185,7 @@ export default function NewEntryScreen() {
 
   return (
     <Screen>
+      <BackButton fallback="/(tabs)/logbook" />
       <Text style={styles.title}>{editing ? "EDIT FLIGHT" : "LOG A FLIGHT"}</Text>
 
       <SectionTitle>Flight</SectionTitle>

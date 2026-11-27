@@ -6,6 +6,8 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Screen } from "../components/Screen";
+import { BackButton } from "../components/BackButton";
+import { confirmAction } from "../lib/dialog";
 import { Card, Field, PrimaryButton, SecondaryButton, SectionTitle } from "../components/ui";
 import { COLORS } from "../lib/theme";
 import { useLogbook } from "../lib/store";
@@ -65,8 +67,19 @@ export default function AircraftScreen() {
     setTailwheel(false);
   };
 
+  const onRemove = async (a: (typeof aircraft)[number]) => {
+    const ok = await confirmAction({
+      title: "Remove this aircraft?",
+      message: `${a.type} · ${a.registration}`,
+      confirmText: "Remove",
+      destructive: true,
+    });
+    if (ok) await deleteAircraft(a.id);
+  };
+
   return (
     <Screen>
+      <BackButton fallback="/(tabs)/more" />
       <Text style={styles.title}>AIRCRAFT</Text>
       <Text style={styles.sub}>{aircraft.length} in your fleet</Text>
 
@@ -84,7 +97,7 @@ export default function AircraftScreen() {
                 {a.tailwheel ? " · tailwheel" : ""}
               </Text>
             </View>
-            <Pressable onPress={() => deleteAircraft(a.id)}>
+            <Pressable onPress={() => void onRemove(a)}>
               <Text style={styles.remove}>Remove</Text>
             </Pressable>
           </View>

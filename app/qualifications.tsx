@@ -6,6 +6,8 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Screen } from "../components/Screen";
+import { BackButton } from "../components/BackButton";
+import { confirmAction } from "../lib/dialog";
 import { Card, Field, PrimaryButton, SecondaryButton, SectionTitle } from "../components/ui";
 import { COLORS } from "../lib/theme";
 import { useLogbook } from "../lib/store";
@@ -53,8 +55,19 @@ export default function QualificationsScreen() {
     setExpiryDate("");
   };
 
+  const onRemove = async (q: (typeof qualifications)[number]) => {
+    const ok = await confirmAction({
+      title: "Remove this qualification?",
+      message: q.name,
+      confirmText: "Remove",
+      destructive: true,
+    });
+    if (ok) await deleteQualification(q.id);
+  };
+
   return (
     <Screen>
+      <BackButton fallback="/(tabs)/more" />
       <Text style={styles.title}>QUALIFICATIONS</Text>
       <Text style={styles.sub}>Medical, flight reviews, ratings & endorsements</Text>
 
@@ -70,7 +83,7 @@ export default function QualificationsScreen() {
                 {q.expiryDate ? `Expires ${q.expiryDate}` : "No expiry"}
               </Text>
             </View>
-            <Pressable onPress={() => deleteQualification(q.id)}>
+            <Pressable onPress={() => void onRemove(q)}>
               <Text style={styles.remove}>Remove</Text>
             </Pressable>
           </View>

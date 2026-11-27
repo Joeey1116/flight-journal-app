@@ -2,15 +2,19 @@
  * Stats — hours by type, hours by month, and the ATP minimums ladder.
  * The view a pilot opens before a checkride or an airline application.
  */
-import { StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
 import { Screen } from "../../components/Screen";
-import { Card, Row, SectionTitle, Stat, fmtHours } from "../../components/ui";
+import { Card, Row, SecondaryButton, SectionTitle, Stat, fmtHours } from "../../components/ui";
 import { COLORS } from "../../lib/theme";
 import { useLogbook } from "../../lib/store";
+import { usePro } from "../../lib/pro";
 import { atpProgress, hoursPerMonth, sumEntries, totalsByType, formatDate } from "../../lib/totals";
 
 export default function StatsScreen() {
+  const router = useRouter();
   const { entries, aircraft } = useLogbook();
+  const { isPro } = usePro();
   const totals = sumEntries(entries);
   const byType = totalsByType(entries);
   const monthly = hoursPerMonth(entries, 6, formatDate(new Date()));
@@ -76,25 +80,42 @@ export default function StatsScreen() {
         <Card><Text style={styles.muted}>No flights yet.</Text></Card>
       )}
 
-      <SectionTitle>ATP minimums (FAA 61.159)</SectionTitle>
-      <Card>
-        {atp.map((a) => (
-          <View key={a.label} style={styles.atpRow}>
-            <Text style={styles.atpLabel}>{a.label}</Text>
-            <View style={styles.barTrack}>
-              <View
-                style={[
-                  styles.barFill,
-                  { width: `${a.pct}%`, backgroundColor: a.done ? COLORS.good : COLORS.accent },
-                ]}
-              />
+      {/* The ATP tracker is a Pro feature; web has no Pro surface at
+          all (free-tier only), so the section simply doesn't exist
+          there. */}
+      {Platform.OS !== "web" && (
+        <>
+          <SectionTitle>ATP minimums (FAA 61.159)</SectionTitle>
+      {isPro ? (
+        <Card>
+          {atp.map((a) => (
+            <View key={a.label} style={styles.atpRow}>
+              <Text style={styles.atpLabel}>{a.label}</Text>
+              <View style={styles.barTrack}>
+                <View
+                  style={[
+                    styles.barFill,
+                    { width: `${a.pct}%`, backgroundColor: a.done ? COLORS.good : COLORS.accent },
+                  ]}
+                />
+              </View>
+              <Text style={styles.atpValue}>
+                {a.have}/{a.need}
+              </Text>
             </View>
-            <Text style={styles.atpValue}>
-              {a.have}/{a.need}
-            </Text>
-          </View>
-        ))}
-      </Card>
+          ))}
+        </Card>
+      ) : (
+        <Card>
+          <Text style={styles.muted}>
+            The ATP minimums tracker is part of Pro — see exactly how close
+            you are to the FAA 61.159 minimums, line by line.
+          </Text>
+          <SecondaryButton title="See Pro" onPress={() => router.push("/pro")} />
+        </Card>
+      )}
+        </>
+      )}
     </Screen>
   );
 }

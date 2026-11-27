@@ -117,8 +117,8 @@ export interface Qualification {
   notes?: string;
 }
 
-/** Free-tier limits (Pro removes them). */
-export const FREE_ENTRY_LIMIT = 25;
+/** Free-tier limits (Pro removes them). ONE place to change the cap. */
+export const FREE_ENTRY_LIMIT = 100;
 
 export function newEntryId(): string {
   return `e_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;

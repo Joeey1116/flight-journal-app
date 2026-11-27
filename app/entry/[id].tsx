@@ -1,9 +1,11 @@
 /**
  * Entry detail — every field of one flight, with edit and delete.
  */
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Screen } from "../../components/Screen";
+import { BackButton } from "../../components/BackButton";
+import { confirmAction } from "../../lib/dialog";
 import { Card, PrimaryButton, SecondaryButton } from "../../components/ui";
 import { COLORS } from "../../lib/theme";
 import { useLogbook } from "../../lib/store";
@@ -24,31 +26,36 @@ export default function EntryDetailScreen() {
   const { entries, deleteEntry } = useLogbook();
   const e = entries.find((x) => x.id === id);
 
+  const goBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace("/(tabs)/logbook");
+  };
+
   if (!e) {
     return (
       <Screen>
+        <BackButton fallback="/(tabs)/logbook" />
         <Text style={styles.title}>FLIGHT NOT FOUND</Text>
-        <SecondaryButton title="Back to logbook" onPress={() => router.back()} />
+        <SecondaryButton title="Back to logbook" onPress={goBack} />
       </Screen>
     );
   }
 
-  const onDelete = () => {
-    Alert.alert("Delete this flight?", `${e.date} · ${e.departure} → ${e.arrival}`, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          await deleteEntry(e.id);
-          router.back();
-        },
-      },
-    ]);
+  const onDelete = async () => {
+    const ok = await confirmAction({
+      title: "Delete this flight?",
+      message: `${e.date} · ${e.departure} → ${e.arrival}`,
+      confirmText: "Delete",
+      destructive: true,
+    });
+    if (!ok) return;
+    await deleteEntry(e.id);
+    goBack();
   };
 
   return (
     <Screen>
+      <BackButton fallback="/(tabs)/logbook" />
       <Text style={styles.title}>{e.departure} → {e.arrival}</Text>
       <Text style={styles.sub}>
         {e.date} · {e.aircraftType} {e.aircraftModel} · {e.registration}

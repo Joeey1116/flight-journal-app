@@ -2,6 +2,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { router } from "expo-router";
 import * as Linking from "expo-linking";
 import { Screen } from "../components/Screen";
+import { BackButton } from "../components/BackButton";
 
 /**
  * Privacy policy — plain language, logbook-specific.
@@ -36,8 +37,13 @@ const SECTIONS: { title: string; body: string }[] = [
 ];
 
 export default function PrivacyPolicy() {
+  const goBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace("/(tabs)/more");
+  };
   return (
     <Screen>
+      <BackButton fallback="/(tabs)/more" />
       <Text style={styles.headline}>Privacy Policy</Text>
       <Text style={styles.subline}>Flight Journal — plain language.</Text>
       {SECTIONS.map((s) => (
@@ -55,7 +61,7 @@ export default function PrivacyPolicy() {
       >
         <Text style={styles.linkText}>beatrackfam.info</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.back} onPress={() => router.back()}>
+      <TouchableOpacity style={styles.back} onPress={goBack}>
         <Text style={styles.backText}>Back</Text>
       </TouchableOpacity>
     </Screen>

@@ -1,6 +1,6 @@
 /**
  * Pro — free vs Pro, and the purchase screen.
- * Free: 25 entries, on-device only. Pro: unlimited entries, PDF/CSV
+ * Free: FREE_ENTRY_LIMIT entries, on-device only. Pro: unlimited entries, PDF/CSV
  * export, ATP minimums tracker, sim-flight auto-import.
  *
  * Monthly and Yearly carry a 7-day free trial (presented here and on
@@ -8,15 +8,29 @@
  *
  * Product IDs are placeholders (TODO in lib/pro.ts) — Joey creates the
  * real products in App Store Connect / Play Console before launch.
- * In this scaffold the store is not connected, so purchases run in
- * demo mode (simulated locally) and the flow can be tested end to end.
+ * Until then there is no store connection: buying and restoring report
+ * "unavailable" and this screen says so plainly — Pro is never granted
+ * for free, and no control on this screen is a dead tap.
  */
 import { useEffect } from "react";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
 import { Screen } from "../components/Screen";
+import { BackButton } from "../components/BackButton";
+import { showAlert } from "../lib/dialog";
 import { Card, PrimaryButton, SecondaryButton, SectionTitle } from "../components/ui";
 import { COLORS } from "../lib/theme";
-import { SKU_NAMES, SKU_PRICES, SKUS, isSubscriptionSku, usePro } from "../lib/pro";
+import {
+  PRO_NOTHING_TO_RESTORE_MESSAGE,
+  PRO_NOTHING_TO_RESTORE_TITLE,
+  PRO_NOT_ON_SALE_MESSAGE,
+  PRO_NOT_ON_SALE_TITLE,
+  SKU_NAMES,
+  SKU_PRICES,
+  SKUS,
+  isSubscriptionSku,
+  usePro,
+} from "../lib/pro";
 import { useLogbook } from "../lib/store";
 import { FREE_ENTRY_LIMIT } from "../lib/types";
 
@@ -30,35 +44,65 @@ function CheckRow({ text }: { text: string }) {
 }
 
 export default function ProScreen() {
+  const router = useRouter();
   const { entries } = useLogbook();
-  const { isPro, products, busySku, error, refreshProducts, buy, restore } = usePro();
+  const { isPro, connected, products, busySku, error, refreshProducts, buy, restore } =
+    usePro();
 
   useEffect(() => {
     void refreshProducts();
   }, [refreshProducts]);
 
   const onBuy = async (sku: string) => {
-    const ok = await buy(sku);
-    Alert.alert(
-      ok ? "Welcome to Pro" : "Purchase didn't go through",
-      ok
-        ? "Pro is active — unlimited entries and PDF/CSV export are unlocked."
-        : "Nothing was charged. Try again, or restore a previous purchase.",
-    );
+    const result = await buy(sku);
+    if (result === "purchased") {
+      showAlert(
+        "Welcome to Pro",
+        "Pro is active — unlimited entries and PDF/CSV export are unlocked.",
+      );
+    } else if (result === "unavailable") {
+      showAlert(PRO_NOT_ON_SALE_TITLE, PRO_NOT_ON_SALE_MESSAGE);
+    } else {
+      showAlert(
+        "Purchase didn't go through",
+        "Nothing was charged. Try again, or restore a previous purchase.",
+      );
+    }
   };
 
   const onRestore = async () => {
-    const owned = await restore();
-    Alert.alert(
-      owned ? "Purchase restored" : "Nothing to restore",
-      owned
-        ? "Pro is active again."
-        : "No previous Pro purchase was found.",
-    );
+    const result = await restore();
+    if (result === "restored") {
+      showAlert("Purchase restored", "Pro is active again.");
+    } else if (result === "unavailable") {
+      showAlert(PRO_NOTHING_TO_RESTORE_TITLE, PRO_NOTHING_TO_RESTORE_MESSAGE);
+    } else {
+      showAlert("Nothing to restore", "No previous Pro purchase was found.");
+    }
   };
+
+  // Web has no Pro surface at all (Joey's rule: web is free-tier
+  // only). Nothing in the web UI links here; if someone lands on the
+  // route directly, say so plainly instead of showing a paywall.
+  if (Platform.OS === "web") {
+    return (
+      <Screen>
+        <BackButton fallback="/(tabs)/more" />
+        <Text style={styles.title}>GO PRO</Text>
+        <Card>
+          <Text style={styles.webNote}>
+            Flight Journal Pro lives in the iOS and Android apps. This web
+            version is the free logbook — log up to {FREE_ENTRY_LIMIT}{" "}
+            flights, and that's the whole deal here.
+          </Text>
+        </Card>
+      </Screen>
+    );
+  }
 
   return (
     <Screen>
+      <BackButton fallback="/(tabs)/more" />
       <Text style={styles.title}>GO PRO</Text>
       <Text style={styles.sub}>
         {entries.length} of {FREE_ENTRY_LIMIT} free entries used
@@ -66,7 +110,7 @@ export default function ProScreen() {
 
       <Card>
         <SectionTitle>Free</SectionTitle>
-        <CheckRow text="Log up to 25 flights" />
+        <CheckRow text={`Log up to ${FREE_ENTRY_LIMIT} flights`} />
         <CheckRow text="Totals, currency & stats" />
         <CheckRow text="On-device storage" />
       </Card>
@@ -118,8 +162,9 @@ export default function ProScreen() {
             );
           })}
           <Text style={styles.note}>
-            Prices shown are the planned prices. Real store products are
-            created in App Store Connect / Play Console before launch.
+            {connected
+              ? "Prices shown are the planned prices. Real store products are created in App Store Connect / Play Console before launch."
+              : `${PRO_NOT_ON_SALE_TITLE} — ${PRO_NOT_ON_SALE_MESSAGE} The plans below are the launch plans; picking one now just shows you this message.`}
           </Text>
         </>
       )}
@@ -142,6 +187,7 @@ const styles = StyleSheet.create({
   planPrice: { color: COLORS.muted, fontSize: 13, marginTop: 2 },
   trialText: { color: COLORS.pro, fontSize: 12, marginTop: 4, lineHeight: 16 },
   proActive: { color: COLORS.good, fontSize: 15, fontWeight: "800" },
+  webNote: { color: COLORS.muted, fontSize: 14, lineHeight: 20 },
   note: { color: COLORS.faint, fontSize: 12, lineHeight: 17, marginTop: 4 },
   error: { color: COLORS.bad, fontSize: 14, marginVertical: 8 },
 });

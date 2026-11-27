@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
-  Alert,
   Image,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -12,9 +12,19 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Screen } from "../components/Screen";
 import { GlassCard } from "../components/GlassCard";
 import { Logo } from "../components/Logo";
+import { alertAction, showAlert } from "../lib/dialog";
 import { maybeRequestTracking } from "../lib/tracking";
 import { loadSettings, saveSettings } from "../lib/settings";
-import { LIFETIME_SKU, SKUS, usePro } from "../lib/pro";
+import { FREE_ENTRY_LIMIT } from "../lib/types";
+import {
+  LIFETIME_SKU,
+  PRO_NOTHING_TO_RESTORE_MESSAGE,
+  PRO_NOTHING_TO_RESTORE_TITLE,
+  PRO_NOT_ON_SALE_MESSAGE,
+  PRO_NOT_ON_SALE_TITLE,
+  SKUS,
+  usePro,
+} from "../lib/pro";
 
 /**
  * Onboarding — welcome → how it works → plain-language promises →
@@ -146,26 +156,36 @@ export default function Onboarding() {
   const selected = plans.find((p) => p.sku === selectedSku) ?? plans[0];
 
   const onCta = async () => {
-    const ok = await buy(selected.sku);
-    if (ok) await finish();
+    const result = await buy(selected.sku);
+    if (result === "purchased") {
+      await finish();
+    } else if (result === "unavailable") {
+      // Demo mode: no store products yet — never grant Pro for free.
+      showAlert(PRO_NOT_ON_SALE_TITLE, PRO_NOT_ON_SALE_MESSAGE);
+    } else {
+      showAlert(
+        "Purchase didn't go through",
+        "Nothing was charged. Try again, or continue free for now.",
+      );
+    }
   };
 
   const onRestore = async () => {
-    const owned = await restore();
-    if (owned) {
-      Alert.alert("Purchase restored", "Pro is active again.", [
-        { text: "Continue", onPress: () => void finish() },
-      ]);
+    const result = await restore();
+    if (result === "restored") {
+      await alertAction("Purchase restored", "Pro is active again.", "Continue");
+      await finish();
+    } else if (result === "unavailable") {
+      showAlert(PRO_NOTHING_TO_RESTORE_TITLE, PRO_NOTHING_TO_RESTORE_MESSAGE);
     } else {
-      Alert.alert("Nothing to restore", "No previous Pro purchase was found.");
+      showAlert("Nothing to restore", "No previous Pro purchase was found.");
     }
   };
 
   const showTerms = () => {
-    Alert.alert(
+    showAlert(
       "Terms",
       "Monthly and Yearly start with a 7-day free trial. Unless you cancel before the trial ends, your store account is charged the plan price, and the subscription renews automatically until cancelled. Cancel anytime in your App Store / Google Play subscription settings. Lifetime is a one-time payment with no subscription. Purchases are handled by Apple / Google under their standard terms.",
-      [{ text: "OK" }],
     );
   };
 
@@ -183,8 +203,10 @@ export default function Onboarding() {
             <Text style={styles.intro}>
               Log flights, track currency, and export a print-ready logbook —
               for airline pilots, students, and sim pilots alike. No account,
-              no sign-in — it's already yours. Free to start, Pro when you
-              want more.
+              no sign-in — it's already yours.{" "}
+              {Platform.OS === "web"
+                ? "Free to start."
+                : "Free to start, Pro when you want more."}
             </Text>
           </View>
         )}
@@ -215,17 +237,21 @@ export default function Onboarding() {
                 qualifications are stored only on this device.
               </Text>
               <Text style={styles.stepText}>
-                • Free tier: log up to 25 flights. Pro unlocks unlimited
-                logging and PDF + CSV export.
+                {Platform.OS === "web"
+                  ? `• Free: log up to ${FREE_ENTRY_LIMIT} flights.`
+                  : `• Free tier: log up to ${FREE_ENTRY_LIMIT} flights. Pro unlocks unlimited logging and PDF + CSV export.`}
               </Text>
               <Text style={styles.stepText}>
-                • Your data is yours — export it any time, delete it any
-                time from the More tab.
+                {Platform.OS === "web"
+                  ? "• Your data is yours — delete it any time from the More tab."
+                  : "• Your data is yours — export it any time, delete it any time from the More tab."}
               </Text>
-              <Text style={styles.stepText}>
-                • Flights flown in the companion flight simulator can
-                auto-log into your logbook (optional, off by default).
-              </Text>
+              {Platform.OS !== "web" && (
+                <Text style={styles.stepText}>
+                  • Flights flown in the companion flight simulator can
+                  auto-log into your logbook (optional, off by default).
+                </Text>
+              )}
             </GlassCard>
             <Text style={styles.fine}>
               By continuing you agree to the privacy policy. Flight Journal
@@ -315,7 +341,7 @@ export default function Onboarding() {
             </View>
 
             <TouchableOpacity onPress={() => void finish()}>
-              <Text style={styles.continueFree}>Continue free — 25 entries included</Text>
+              <Text style={styles.continueFree}>Continue free — {FREE_ENTRY_LIMIT} entries included</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -324,7 +350,15 @@ export default function Onboarding() {
           <View style={styles.footer}>
             <TouchableOpacity
               style={styles.primary}
-              onPress={() => setPage(page + 1)}
+              onPress={() => {
+                // Web has NO paywall (Joey's rule: web is free-tier
+                // only) — the last info page finishes onboarding.
+                if (Platform.OS === "web" && page === 2) {
+                  void finish();
+                } else {
+                  setPage(page + 1);
+                }
+              }}
             >
               <Text style={styles.primaryText}>Continue</Text>
             </TouchableOpacity>

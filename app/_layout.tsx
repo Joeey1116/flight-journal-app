@@ -17,6 +17,13 @@ const _g = globalThis as any;
 if (!_g.__btrErrorHandlerInstalled) {
   _g.__btrErrorHandlerInstalled = true;
   const show = (title: string, message: string) => {
+    if (Platform.OS === 'web') {
+      // Deliberately NOT a dialog on web: this handler also catches
+      // harmless native-module noise from web builds, and a blocking
+      // browser popup for each one would wreck the PWA. Console only.
+      console.error(`${title}: ${message.slice(0, 500)}`);
+      return;
+    }
     try {
       Alert.alert(title, message.slice(0, 500));
     } catch {

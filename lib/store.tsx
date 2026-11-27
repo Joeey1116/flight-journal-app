@@ -4,9 +4,11 @@
  * Local-only (Nov 27, 2026: accounts and cloud sync removed at Joey's
  * direction): entries, aircraft, and qualifications live in AsyncStorage
  * on this device and work fully offline. There is no backend.
- * On first launch the store seeds demo data so every screen has content.
+ * On first launch the store seeds demo data so every screen has content
+ * — EXCEPT on web: the web version starts at zero, no seed data, the
+ * user adds their own flights (Joey's standing rule for web).
  *
- * Free tier: 25 entries (Pro removes the cap — see lib/pro.ts).
+ * Free tier: FREE_ENTRY_LIMIT entries (Pro removes the cap — see lib/pro.ts).
  */
 import React, {
   createContext,
@@ -18,6 +20,7 @@ import React, {
   type ReactNode,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 import { SEED_AIRCRAFT, SEED_ENTRIES, SEED_QUALIFICATIONS } from "./seed";
 import {
   newEntryId,
@@ -83,8 +86,9 @@ export function LogbookProvider({ children }: { children: ReactNode }) {
         readJson<Qualification[]>(QUALS_KEY, []),
         AsyncStorage.getItem(SEEDED_KEY),
       ]);
-      if (e.length === 0 && !seeded) {
-        // First launch ever: seed demo data so every screen has content.
+      if (e.length === 0 && !seeded && Platform.OS !== "web") {
+        // First launch ever (native): seed demo data so every screen
+        // has content. Web never seeds — it starts at zero.
         setEntries(SEED_ENTRIES);
         setAircraft(SEED_AIRCRAFT);
         setQualifications(SEED_QUALIFICATIONS);
@@ -95,6 +99,11 @@ export function LogbookProvider({ children }: { children: ReactNode }) {
           AsyncStorage.setItem(SEEDED_KEY, "1"),
         ]);
       } else {
+        if (e.length === 0 && !seeded) {
+          // Web first run: stay empty; mark seeded so the native-only
+          // seeding can never fire here later.
+          await AsyncStorage.setItem(SEEDED_KEY, "1");
+        }
         setEntries(e);
         setAircraft(a);
         setQualifications(q);
