@@ -79,8 +79,12 @@ jobs:
           node-version: '24'
           cache: npm
 
+      # --legacy-peer-deps: see ios-build.yml — react-native-macos in
+      # the shared package.json peers at react-native@0.83.10 vs the
+      # app's react-native@0.86; the flag only skips peer enforcement,
+      # the lockfile still pins every installed version.
       - name: Install JS dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Generate the native Android project (expo prebuild)
         env:
