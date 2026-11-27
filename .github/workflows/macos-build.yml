@@ -14,7 +14,7 @@ name: Build macOS (FlightJournal)
 # The archive/export steps below expect a Mac App Store Connect
 # distribution profile named exactly:
 #
-#     FlightJournal Mac
+#     FlightJournal - Pilot Logbook
 #
 # Joey created the profile in the Developer portal on Nov 27, 2026
 # (type "Mac", not Catalyst; App ID com.beatrackfaminc.flightjournal),
@@ -70,7 +70,7 @@ permissions:
 
 env:
   # ⚠️ Must match the profile name in the Developer portal exactly.
-  MAC_PROFILE_NAME: 'FlightJournal Mac'
+  MAC_PROFILE_NAME: 'FlightJournal - Pilot Logbook'
 
 jobs:
   build-macos:
