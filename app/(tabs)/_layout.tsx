@@ -200,6 +200,16 @@ export default function TabsLayout() {
   if (Platform.OS === 'web') {
     return <WebTabsLayout />;
   }
+  // tvOS pilot (Nov 27, 2026): NativeTabs (Liquid Glass UITabBar) is not
+  // the tvOS navigation model — Apple TV needs a focus-driven bar the
+  // Siri Remote can move through. The JS Tabs bar below is built from
+  // Pressables, which the react-native-tvos fork makes focusable with
+  // native focus events, so the same five tabs render and are reachable
+  // by remote. iOS/Android never take this branch (Platform.isTV is
+  // false there).
+  if ((Platform as unknown as { isTV?: boolean }).isTV) {
+    return <WebTabsLayout />;
+  }
   return <NativeTabsLayout />;
 }
 
