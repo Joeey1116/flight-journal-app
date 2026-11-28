@@ -13,7 +13,6 @@ import { Screen } from "../components/Screen";
 import { GlassCard } from "../components/GlassCard";
 import { Logo } from "../components/Logo";
 import { alertAction, showAlert } from "../lib/dialog";
-import { maybeRequestTracking } from "../lib/tracking";
 import { loadSettings, saveSettings } from "../lib/settings";
 import { FREE_ENTRY_LIMIT } from "../lib/types";
 import {
@@ -148,7 +147,6 @@ export default function Onboarding() {
     } catch {
       // Best-effort — worst case onboarding shows again next launch.
     }
-    void maybeRequestTracking();
     router.replace("/(tabs)");
   };
 

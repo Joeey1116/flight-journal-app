@@ -59,12 +59,6 @@
         }
       ],
       "./plugins/with-kotlin-gradle-plugin-version",
-      [
-        "expo-tracking-transparency",
-        {
-          "userTrackingPermission": "This identifier is used to personalize your Flight Journal experience. We run no ads and no third-party trackers \u2014 it stays off unless you turn it on."
-        }
-      ],
       "./plugins/with-privacy-manifest",
       "./plugins/with-app-clip",
       [
